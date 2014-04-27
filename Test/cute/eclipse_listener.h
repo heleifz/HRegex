@@ -14,40 +14,52 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with CUTE.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright 2007-2009 Peter Sommerlad
+ * Copyright 2007 Peter Sommerlad, Emanuel Graf
  *
  *********************************************************************************/
-
-#ifndef OSTREAM_LISTENER_H_
-#define OSTREAM_LISTENER_H_
-#include "cute_listener.h"
+#ifndef ECLIPSE_LISTENER_H_
+#define ECLIPSE_LISTENER_H_
+#include "ostream_listener.h"
 #include <iostream>
+#include <iterator>
+#include <algorithm>
 namespace cute {
-	// a "root" listener displaying output, use it as an example on how to build your own, e.g., for XML output
-	class ostream_listener
+
+	class eclipse_listener
 	{
-		std::ostream &out;
+	protected:
+		struct blankToUnderscore{
+            char operator()(char in){
+			if (in == ' ') return '_';
+			return in;
+		}
+        };
+		std::string maskBlanks(const std::string &in) {
+			std::string result;
+			std::transform(in.begin(),in.end(),std::back_inserter(result),blankToUnderscore());
+			return result;
+		}
 	public:
-		ostream_listener():out(std::cerr){}
-		ostream_listener(std::ostream &os):out(os) {}
+		eclipse_listener() {}
+		void start(test const &t){
+			std::cout << std::endl << "#starting " <<t.name()<< std::endl;
+		}
+
 		void begin(suite const &t,char const *info){
-			out << "beginning: " << info<<std::endl;
+			std::cout << std::endl << "#beginning " << info << " " << t.size() << std::endl;
 		}
 		void end(suite const &t, char const *info){
-			out << "ending: " << info<<std::endl;
-		}
-		void start(test const &t){
-			out << "starting: " <<t.name()<< std::endl;
+			std::cout << std::endl << "#ending " << info << std::endl;
 		}
 		void success(test const &t, char const *msg){
-			out <<  t.name() <<" " << msg<< std::endl;
+			std::cout << std::endl << "#success " <<  maskBlanks(t.name()) <<" " << msg<< std::endl;
 		}
 		void failure(test const &t,test_failure const &e){
-			out << e.filename << ":" << e.lineno << ": testcase failed: " <<e.reason << " in " << t.name()<< std::endl;
+			std::cout << std::endl << "#failure " << maskBlanks(t.name()) << " " << e.filename << ":" << e.lineno << " " <<e.reason << std::endl;
 		}
 		void error(test const &t, char const *what){
-			out << what << " in " << t.name() << std::endl;
+			std::cout << std::endl << "#error " << maskBlanks(t.name()) << " " << what << std::endl;
 		}
 	};
 }
-#endif /*OSTREAM_LISTENER_H_*/
+#endif /*ECLIPSE_LISTENER_H_*/

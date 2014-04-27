@@ -35,15 +35,11 @@ namespace cute {
 		// for simple test functions
 		template <typename VoidFunctor>
 		test(VoidFunctor const &t, std::string sname = demangle(typeid(VoidFunctor).name()))
-		:name_(sname),theTest(t){}
-		// separate overload to allow nicer C++11 initializers with {"name",lambda}
-		template <typename VoidFunctor>
-		test(std::string sname,VoidFunctor const &t)
-		:name_(sname),theTest(t){}
+		:theTest(t),name_(sname){}
 
 	private:
-		std::string name_;
 		boost_or_tr1::function<void()> theTest;
+		std::string name_;
 	};
 
 }

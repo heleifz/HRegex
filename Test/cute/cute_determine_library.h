@@ -24,15 +24,9 @@
 #include <tr1/functional>
 // bind already given by <functional> in cute_test.h from cute_suite.h
 namespace boost_or_tr1 = std::tr1;
-namespace cute {
-	using namespace boost_or_tr1::placeholders;
-}
-#elif defined(USE_STD11)
+#elif defined(USE_STD0X)
 #include <functional>
 namespace boost_or_tr1 = std;
-namespace cute {
-	using namespace boost_or_tr1::placeholders;
-}
 #else
 #include <boost/bind.hpp>
 #include <boost/function.hpp>

@@ -24,7 +24,7 @@
 namespace cute {
 	typedef std::vector<test> suite;
 	// convenience operator for appending to suites, might not be right
-	// deprecated, not supported by plug-in, not needed with Eclipse plug-in
+	// can use boost/assign.hpp instead...
 	inline
 	suite &operator+=(suite &left, suite const &right){
 		left.insert(left.end(),right.begin(),right.end());

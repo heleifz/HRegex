@@ -1,13 +1,26 @@
 #include "globals.h"
 
+#define EPSTRANS -1
+
 class NFAEdge
 {
 public:
-	NFAEdge(State f, State t, Transition tran);
-	State getFrom();
-	State getTo();
-	State getTheOther(State n);
-	Transition getTransition();
+	NFAEdge(State f, State t, Transition tran)
+		: from(f), to(t), transition(tran)
+	{ 
+	}
+	State getFrom() const
+	{
+		return from;
+	}
+	State getTo() const
+	{
+		return to;
+	}
+	Transition getTransition() const
+	{
+		return transition;
+	}
 private:
 	State from;
 	State to;
@@ -37,6 +50,15 @@ public:
 	void addTransition(std::shared_ptr<NFAEdge> edge)
 	{
 		adj[edge->getFrom()].push_back(edge);
+	}
+
+	const std::vector<std::shared_ptr<NFAEdge>>& getNeighbour(State s)
+	{
+		if (s > adj.size())
+		{
+			throw IllegalStateError();
+		}
+		return adj[s];
 	}
 
 	void setStart(State s)
