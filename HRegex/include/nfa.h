@@ -1,6 +1,8 @@
+#ifndef _HREG_NFA_
+#define _HREG_NFA_
+
 #include "globals.h"
 
-#define EPSTRANS -1
 
 class NFAEdge
 {
@@ -37,12 +39,13 @@ public:
 	void clear()
 	{
 		adj.clear();
-		starts.clear();
-		terminates.clear();
+		start.clear();
+		terminateFlags.clear();
 	}
 
 	State generateState()
 	{
+		terminateFlags.push_back(false);
 		adj.push_back(std::vector<std::shared_ptr<NFAEdge>>());
 		return adj.size() - 1;
 	}
@@ -52,22 +55,13 @@ public:
 		adj[edge->getFrom()].push_back(edge);
 	}
 
-	const std::vector<std::shared_ptr<NFAEdge>>& getNeighbour(State s)
-	{
-		if (s > adj.size())
-		{
-			throw IllegalStateError();
-		}
-		return adj[s];
-	}
-
 	void setStart(State s)
 	{
 		if (s >= adj.size())
 		{
 			throw IllegalStateError();
 		}
-		starts.insert(s);
+		start.insert(s);
 	}
 
 	void setTerminate(State s)
@@ -76,33 +70,80 @@ public:
 		{
 			throw IllegalStateError();
 		}
-		terminates.insert(s);
+		terminateFlags[s] = true;
+	}
+
+	const std::vector<std::shared_ptr<NFAEdge>>& getNeighbours(State s) const
+	{
+		if (s > adj.size())
+		{
+			throw IllegalStateError();
+		}
+		return adj[s];
+	}
+
+	const std::set<State>& getStart() const
+	{
+		return start;
+	}
+
+	size_t size() const
+	{
+		return adj.size();
 	}
 
 	bool isStart(State s) const
 	{
-		return (starts.find(s) != starts.end());
+		if (s >= adj.size())
+		{
+			throw IllegalStateError();
+		}
+		return start.find(s) != start.end();
 	}
 
 	bool isTerminate(State s) const
 	{
-		return (terminates.find(s) != terminates.end());
+		if (s >= adj.size())
+		{
+			throw IllegalStateError();
+		}
+		return terminateFlags[s];
 	}
 
-	// ! 
 	bool containsTerminate(const std::set<State>& s) const
 	{
-		return std::find_if(s.begin(), s.end(), [&](State st) {
+		return std::find_if(s.begin(), s.end(), [&](State st)
+		{
 			return isTerminate(st);
 		}) != s.end();
 	}
 
-	//std::set<State> epsilonClosure(const std::set<State>& states);
-	//std::set<State> step(const std::set<State>& states);
+	std::shared_ptr<NFAEdge> getTransition(State s, Transition t) const
+	{
+		if (s >= adj.size())
+		{
+			throw IllegalStateError();
+		}
+		auto result = std::find_if(adj[s].begin(), adj[s].end(),
+			[t](const std::shared_ptr<NFAEdge>& e)
+			{
+				return e->getTransition() == t;
+			});
+
+		if (result == adj[s].end())
+		{
+			return nullptr;
+		}
+		else
+		{
+			return (*result);
+		}
+	}
 
 private:
-
-	std::set<State> starts;
-	std::set<State> terminates;
+	std::set<State> start;
+	std::vector<bool> terminateFlags;
 	std::vector<std::vector<std::shared_ptr<NFAEdge>>> adj;
 };
+
+#endif

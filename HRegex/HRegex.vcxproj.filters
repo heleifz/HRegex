@@ -29,5 +29,8 @@
     <ClInclude Include="include\globals.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="include\nfa_walker.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

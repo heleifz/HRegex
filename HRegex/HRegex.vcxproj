@@ -69,6 +69,7 @@
   <ItemGroup>
     <ClInclude Include="include\globals.h" />
     <ClInclude Include="include\nfa.h" />
+    <ClInclude Include="include\nfa_walker.h" />
     <ClInclude Include="include\parser.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
