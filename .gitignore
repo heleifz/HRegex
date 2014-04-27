@@ -213,3 +213,9 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
+Test/cute/lgpl.txt
+Test/cute/gpl.txt
+Test/cute/cute_repeated_test.h
+Test/cute/lgpl.txt
+Test/cute/gpl.txt
+Test/cute/cute_repeated_test.h
