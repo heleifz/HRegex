@@ -1,11 +1,13 @@
 #include "testNFA.h"
-#include "testNFAWalker.h"
 #include "testParser.h"
+#include "testContainers.h"
+#include "testDFA.h"
 
 int main()
 {
+	containersSuit();
 	nfaSuit();
-	nfaWalkerSuit();
 	parserSuit();
+	dfaSuit();
 	system("pause");
 }

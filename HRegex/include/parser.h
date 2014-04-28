@@ -26,7 +26,7 @@
 
 */
 
-class Parser
+class Parser : public NotCopyable
 {
 public:
 	Parser(const char *input, NFA& automata)
@@ -53,14 +53,14 @@ private:
 		{
 			start = nfa.generateState();
 			end = nfa.generateState();
-			nfa.addTransition(std::make_shared<NFAEdge>(start, s1, EPSTRANS));
-			nfa.addTransition(std::make_shared<NFAEdge>(s2, end, EPSTRANS));
+			nfa.addTransition(start, s1, Transition());
+			nfa.addTransition(s2, end, Transition());
 			while (*re == '|')
 			{
 				re++;
 				parseTerm(s1, s2);
-				nfa.addTransition(std::make_shared<NFAEdge>(start, s1, EPSTRANS));
-				nfa.addTransition(std::make_shared<NFAEdge>(s2, end, EPSTRANS));
+				nfa.addTransition(start, s1, Transition());
+				nfa.addTransition(s2, end, Transition());
 			}
 		}
 		else
@@ -79,7 +79,7 @@ private:
 			State s1;
 			State s2;
 			parseFactor(s1, s2);
-			nfa.addTransition(std::make_shared<NFAEdge>(current, s1, EPSTRANS));
+			nfa.addTransition(current, s1, Transition());
 			current = s2;
 		}
 		end = current;
@@ -93,10 +93,10 @@ private:
 		{
 			start = nfa.generateState();
 			end = nfa.generateState();
-			nfa.addTransition(std::make_shared<NFAEdge>(start, s1, EPSTRANS));
-			nfa.addTransition(std::make_shared<NFAEdge>(start, end, EPSTRANS));
-			nfa.addTransition(std::make_shared<NFAEdge>(s2, end, EPSTRANS));
-			nfa.addTransition(std::make_shared<NFAEdge>(s2, s1, EPSTRANS));
+			nfa.addTransition(start, s1, Transition());
+			nfa.addTransition(start, end, Transition());
+			nfa.addTransition(s2, end, Transition());
+			nfa.addTransition(s2, s1, Transition());
 			re++;
 		}
 		else
@@ -117,14 +117,14 @@ private:
 			switch (*re)
 			{
 			case 'n':
-				nfa.addTransition(std::make_shared<NFAEdge>(start, end, '\n'));
+				nfa.addTransition(start, end, '\n');
 				break;
 			case 't':
-				nfa.addTransition(std::make_shared<NFAEdge>(start, end, '\t'));
+				nfa.addTransition(start, end, '\t');
 				break;
 			case '{': case '}': case '|':
 			case '(': case ')':
-				nfa.addTransition(std::make_shared<NFAEdge>(start, end, *re));
+				nfa.addTransition(start, end, *re);
 				break;
 			default:
 				throw ParseError();
@@ -143,7 +143,7 @@ private:
 		default:
 			start = nfa.generateState();
 			end = nfa.generateState();
-			nfa.addTransition(std::make_shared<NFAEdge>(start, end, *re));
+			nfa.addTransition(start, end, *re);
 			re++;
 			break;
 		}

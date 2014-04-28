@@ -20,14 +20,17 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="testNFA.h">
-      <Filter>源文件</Filter>
+    <ClInclude Include="testContainers.h">
+      <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="testNFAWalker.h">
-      <Filter>源文件</Filter>
+    <ClInclude Include="testDFA.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="testNFA.h">
+      <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="testParser.h">
-      <Filter>源文件</Filter>
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

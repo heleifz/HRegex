@@ -72,8 +72,9 @@
     <ClCompile Include="test.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="testContainers.h" />
+    <ClInclude Include="testDFA.h" />
     <ClInclude Include="testNFA.h" />
-    <ClInclude Include="testNFAWalker.h" />
     <ClInclude Include="testParser.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
