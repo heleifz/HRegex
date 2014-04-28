@@ -6,13 +6,18 @@
 /*	
 	** Thompson Construction Algorithm **
 
+	TODO : 
+	+,?
+	charactor class
+	refactor
+
 	// regular expression syntax : 
 
 	re : term { "|" term }
 	term : factor { factor }
-	factor : primitive (*)
+	factor : primitive (*|+|?)
 	primitive : "\" meta | alpha | (re)
-	meta : "n" "{" "|" "}" "(" ")" "t"
+	meta : "n" "{" "|" "}" "(" ")" "t" "+" "?"
 
 	// parse function return start and end state 
 	// of the constructed subgraph

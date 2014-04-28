@@ -45,7 +45,7 @@ void testAlternate()
 void testRegexTogether()
 {
 	NFA nfa;
-	Parser p("(a|b)*abb", nfa);
+	Parser("(a|b)*abb", nfa);
 	NFAWalker walker(nfa);
 	ASSERT(walker.match("babb", 4));
 	ASSERT(walker.match("baaaaaabb", 9));
@@ -58,6 +58,14 @@ void testRegexTogether()
 	ASSERT(!walker.match("aaaaa", 5));
 	ASSERT(!walker.match("", 0));
 	ASSERT(!walker.match("b", 1));
+	Parser("(1|2|3333)*a*cb*", nfa);
+	ASSERT(walker.match("c", 1));
+	ASSERT(walker.match("1212c", 5));
+	ASSERT(walker.match("aaaaaacbbbbbbb", 14));
+	ASSERT(walker.match("22aaaaaacbbbbbbb", 16));
+	ASSERT(walker.match("3333aaaaaacbbbbbbb", 18));
+	ASSERT(!walker.match("23aaaaaacbbbbbbb", 16));
+	ASSERT(!walker.match("333aaaaaacbbbbbbb", 17));
 }
 
 void parserSuit()
