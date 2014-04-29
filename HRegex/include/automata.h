@@ -1,5 +1,5 @@
-#ifndef _HREG_NFA_
-#define _HREG_NFA_
+#ifndef _HREG_AUTOMATA_
+#define _HREG_AUTOMATA_
 
 #include "globals.h"
 #include "containers.h"
@@ -10,10 +10,13 @@ public:
 	enum TransitionType
 	{
 		NORMAL,
-		EPSILON
+		EPSILON,
+		WILDCARD,
+		DIGIT
 	};
 
 	Transition(char m) : type(NORMAL) { data.match = m; }
+	Transition(TransitionType tp) : type(tp) { }
 	Transition() : type(EPSILON) { }
 
 	bool check(char input) const
@@ -24,6 +27,10 @@ public:
 			return data.match == input;
 		case EPSILON:
 			return true;
+		case WILDCARD:
+			return true;
+		case DIGIT:
+			return (input >= '0' && input <= '9');
 		}
 		return false;
 	}
@@ -45,10 +52,34 @@ public:
 			return data.match == other.data.match;
 			break;
 		case Transition::EPSILON:
+		case Transition::WILDCARD:
+		case Transition::DIGIT:
 			return true;
 			break;
 		default:
 			return false;
+			break;
+		}
+	}
+
+	std::string toString() const
+	{
+		switch (type)
+		{
+		case Transition::NORMAL:
+			return std::string("Normal") + "[" + data.match + "]";
+			break;
+		case Transition::EPSILON:
+			return std::string("Episilon");
+			break;
+		case Transition::WILDCARD:
+			return std::string("Wildcard");
+			break;
+		case Transition::DIGIT:
+			return std::string("Digit");
+			break;
+		default:
+			return std::string("Illegal Transition");
 			break;
 		}
 	}
@@ -63,10 +94,10 @@ private:
 
 typedef size_t State;
 
-class NFAEdge
+class Edge
 {
 public:
-	NFAEdge(State f, State t, Transition tran)
+	Edge(State f, State t, Transition tran)
 		: from(f), to(t), transition(tran)
 	{ 
 	}
@@ -82,17 +113,23 @@ public:
 	{
 		return transition;
 	}
+	std::string toString() const
+	{
+		std::stringstream ss;
+		ss << "From " << from << " To " << to << " : " << transition.toString();
+		return ss.str();
+	}
 private:
 	State from;
 	State to;
 	Transition transition;
 };
 
-class NFA
+class Automata
 {
 public:
 
-	NFA() : hasStart(false) {}
+	Automata() : hasStart(false) {}
 
 	// NFA construction
 	void clear()
@@ -105,13 +142,13 @@ public:
 	State generateState()
 	{
 		terminateFlags.push_back(false);
-		adj.push_back(std::vector<NFAEdge>());
+		adj.push_back(std::vector<Edge>());
 		return adj.size() - 1;
 	}
 
 	void addTransition(State from, State to, const Transition& t)
 	{
-		adj[from].push_back(NFAEdge(from, to, t));
+		adj[from].push_back(Edge(from, to, t));
 	}
 
 	void setStart(State s)
@@ -133,7 +170,7 @@ public:
 		terminateFlags[s] = true;
 	}
 
-	const std::vector<NFAEdge>& getNeighbours(State s) const
+	const std::vector<Edge>& getNeighbours(State s) const
 	{
 		if (s > adj.size())
 		{
@@ -182,7 +219,7 @@ public:
 		}) != s.end();
 	}
 
-	std::vector<Transition> getAllTransitions(const SortedVectorSet<State>& states) const
+	std::vector<Transition> getNoneEpsilonTransitions(const SortedVectorSet<State>& states) const
 	{
 		std::vector<Transition> transitions;
 		for (auto i = states.begin(); i != states.end(); ++i)
@@ -190,6 +227,10 @@ public:
 			for (auto j = getNeighbours(*i).begin(); j != getNeighbours(*i).end(); ++j)
 			{
 				Transition t = j->getTransition();
+				if (t.getType() == Transition::EPSILON)
+				{
+					continue;
+				}
 				if (std::find(transitions.begin(), transitions.end(), t) == transitions.end())
 				{
 					transitions.push_back(j->getTransition());
@@ -199,11 +240,12 @@ public:
 		return transitions;
 	}
 
-	void epsilonClosure(SortedVectorSet<State>& states) const
+	SortedVectorSet<State> epsilonClosure(SortedVectorSet<State>& states) const
 	{
 		// use DFS to find eps-closure
 		std::vector<bool> mark(size(), false);
 		std::stack<State> stk;
+		SortedVectorSet<State> epsilon = states;
 		for (auto i = states.begin(); i != states.end(); ++i)
 		{
 			mark[*i] = true;
@@ -218,16 +260,16 @@ public:
 				State foo = i->getTo();
 				if (!mark[foo] && i->getTransition().getType() == Transition::EPSILON)
 				{
-					states.insert(foo);
+					epsilon.insert(foo);
 					mark[foo] = true;
 					stk.push(foo);
 				}
 			}
 		}
-		return;
+		return epsilon;
 	}
 
-	SortedVectorSet<State> step(SortedVectorSet<State>& states, Transition t) const
+	SortedVectorSet<State> move(SortedVectorSet<State>& states, Transition t) const
 	{
 		SortedVectorSet<State> destinations;
 		// ignore epsilon transition
@@ -247,24 +289,66 @@ public:
 		return destinations;
 	}
 
-	bool match(const char *str, size_t length) const
+	SortedVectorSet<State> move(SortedVectorSet<State>& states, char input) const
+	{
+		SortedVectorSet<State> destinations;
+		for (auto i = states.begin(); i != states.end(); ++i)
+		{
+			for (auto j = getNeighbours(*i).begin(); j != getNeighbours(*i).end(); ++j)
+			{
+				Transition t = j->getTransition();
+				if (t.getType() != Transition::EPSILON &&
+					t.check(input))
+				{
+					destinations.insert(j->getTo());
+				}
+			}
+		};
+		return destinations;
+	}
+
+	bool simulate(const char *str, size_t length) const
 	{
 		SortedVectorSet<State> states;
 		states.insert(getStart());
 		for (size_t i = 0; i < length; ++i)
 		{
-			epsilonClosure(states);
-			states = step(states, str[i]);
+			states = move(epsilonClosure(states), str[i]);
 		}
-		epsilonClosure(states);
-		return containsTerminate(states);
+		return containsTerminate(epsilonClosure(states));
+	}
+
+	std::string toString() const
+	{
+		std::stringstream ss;
+		ss << "The automata has " << size() << " state(s):\n";
+		int j = 0;
+		for (auto i = adj.begin(); i != adj.end(); i++, j++)
+		{
+			ss << "State " << j;
+			if (isTerminate(j))
+			{
+				ss << "(terminate)";
+			}
+			else if (isStart(j))
+			{
+				ss << "(start)";
+			}
+			ss << "\n============\n";
+			for (auto k = (*i).begin(); k != (*i).end(); ++k)
+			{
+				ss << k->toString() << "\n";
+			}
+			ss << "============\n";
+		}
+		return ss.str();
 	}
 
 private:
 	State start;
 	bool hasStart;
 	std::vector<bool> terminateFlags;
-	std::vector<std::vector<NFAEdge>> adj;
+	std::vector<std::vector<Edge>> adj;
 };
 
 #endif

@@ -1,7 +1,7 @@
 #ifndef _HREG_PARSER_
 #define _HREG_PARSER_
 
-#include "nfa.h"
+#include "automata.h"
 
 /*	
 	** Thompson Construction Algorithm **
@@ -29,10 +29,15 @@
 class Parser : public NotCopyable
 {
 public:
-	Parser(const char *input, NFA& automata)
+	Parser(const char *input, Automata& automata)
 		: re(input), nfa(automata)
 	{
 		nfa.clear();
+		// empty string
+		if (*re == '\0')
+		{
+			return;
+		}
 		State s;
 		State e;
 		parseRE(s, e);
@@ -89,8 +94,15 @@ private:
 		State s1;
 		State s2;
 		parsePrimitive(s1, s2);
-		if (*re == '*')
+		switch (*re)
 		{
+		case '?':
+			nfa.addTransition(s1, s2, Transition());
+			start = s1;
+			end = s2;
+			re++;
+			break;
+		case '*':
 			start = nfa.generateState();
 			end = nfa.generateState();
 			nfa.addTransition(start, s1, Transition());
@@ -98,11 +110,18 @@ private:
 			nfa.addTransition(s2, end, Transition());
 			nfa.addTransition(s2, s1, Transition());
 			re++;
-		}
-		else
-		{
+			break;
+		case '+':
+			start = s1;
+			end = nfa.generateState();
+			nfa.addTransition(s2, end, Transition());
+			nfa.addTransition(end, s1, Transition());
+			re++;
+			break;
+		default:
 			start = s1;
 			end = s2;
+			break;
 		}
 	}
 	void parsePrimitive(State& start, State& end)
@@ -122,8 +141,13 @@ private:
 			case 't':
 				nfa.addTransition(start, end, '\t');
 				break;
+			case 'd':
+				nfa.addTransition(start, end, Transition::DIGIT);
+				break;
 			case '{': case '}': case '|':
-			case '(': case ')':
+			case '(': case ')': case '.':
+			case '+': case '*': case '?':
+			case '\\':
 				nfa.addTransition(start, end, *re);
 				break;
 			default:
@@ -140,6 +164,15 @@ private:
 			}
 			re++;
 			break;
+		case '\0': case '*': case '|':
+			throw ParseError();
+			break;
+		case '.':
+			start = nfa.generateState();
+			end = nfa.generateState();
+			nfa.addTransition(start, end, Transition::WILDCARD);
+			re++;
+			break;
 		default:
 			start = nfa.generateState();
 			end = nfa.generateState();
@@ -150,7 +183,7 @@ private:
 	}
 
 	const char *re;
-	NFA& nfa;
+	Automata& nfa;
 };
 
 #endif

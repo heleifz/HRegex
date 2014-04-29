@@ -68,9 +68,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\containers.h" />
-    <ClInclude Include="include\dfa.h" />
+    <ClInclude Include="include\simplifier.h" />
     <ClInclude Include="include\globals.h" />
-    <ClInclude Include="include\nfa.h" />
+    <ClInclude Include="include\automata.h" />
     <ClInclude Include="include\parser.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -1,8 +1,10 @@
 /************************************************************************/
-/*  Test NFA                                                            */
+/*  Test Automata                                                            */
 /************************************************************************/
 
-#include "nfa.h"
+// TODO : test input move
+
+#include "automata.h"
 #include "cute/cute.h"
 
 void testTransitionEqualAndType()
@@ -33,7 +35,7 @@ void testTransitionCheck()
 
 void testSize()
 {
-	NFA nfa;
+	Automata nfa;
 	ASSERT_EQUAL(0, nfa.size());
 	State s1 = nfa.generateState();
 	State s2 = nfa.generateState();
@@ -45,7 +47,7 @@ void testSize()
 
 void testAddTransition()
 {
-	NFA nfa;
+	Automata nfa;
 	State s1 = nfa.generateState();
 	State s2 = nfa.generateState();
 	State s3 = nfa.generateState();
@@ -63,7 +65,7 @@ void testAddTransition()
 
 void testStartTerminate()
 {
-	NFA nfa;
+	Automata nfa;
 
 	State s1 = nfa.generateState();
 	State s2 = nfa.generateState();
@@ -83,7 +85,7 @@ void testStartTerminate()
 
 void testTerminateSet()
 {
-	NFA nfa;
+	Automata nfa;
 
 	State s1 = nfa.generateState();
 	State s2 = nfa.generateState();
@@ -106,32 +108,34 @@ void testTerminateSet()
 	ASSERT(nfa.containsTerminate(s));
 }
 
-void testGetAllTransitions()
+void testGetNoneEpsilonTransitions()
 {
-	NFA nfa;
+	Automata nfa;
 	State s1 = nfa.generateState();
 	State s2 = nfa.generateState();
 	State s3 = nfa.generateState();
+	State s4 = nfa.generateState();
 
 	nfa.addTransition(s1, s2, 'B');
 	nfa.addTransition(s1, s3, 'C');
+	nfa.addTransition(s1, s4, Transition());
 
 	SortedVectorSet<State> states;
-	auto result = nfa.getAllTransitions(states);
+	auto result = nfa.getNoneEpsilonTransitions(states);
 	ASSERT_EQUAL(0, result.size());
 	states.insert(s1);
-	result = nfa.getAllTransitions(states);
+	result = nfa.getNoneEpsilonTransitions(states);
 	ASSERT_EQUAL(2, result.size());
 	ASSERT(std::find(result.begin(), result.end(), 'B') != result.end());
 	ASSERT(std::find(result.begin(), result.end(), 'C') != result.end());
 	nfa.addTransition(s1, s2, 'B');
-	result = nfa.getAllTransitions(states);
+	result = nfa.getNoneEpsilonTransitions(states);
 	ASSERT_EQUAL(2, result.size());
 }
 
 void testEpsilonClosure()
 {
-	NFA nfa;
+	Automata nfa;
 	State s1 = nfa.generateState();
 	State s2 = nfa.generateState();
 	State s3 = nfa.generateState();
@@ -148,7 +152,7 @@ void testEpsilonClosure()
 
 	SortedVectorSet<State> states;
 	states.insert(s1);
-	nfa.epsilonClosure(states);
+	states = nfa.epsilonClosure(states);
 	ASSERT(states.contains(s1));
 	ASSERT(states.contains(s2));
 	ASSERT(states.contains(s3));
@@ -157,9 +161,9 @@ void testEpsilonClosure()
 	ASSERT(!states.contains(s6));
 }
 
-void testStep()
+void testMove()
 {
-	NFA nfa;
+	Automata nfa;
 	State s1 = nfa.generateState();
 	State s2 = nfa.generateState();
 	State s3 = nfa.generateState();
@@ -176,23 +180,23 @@ void testStep()
 
 	SortedVectorSet<State> states;
 	states.insert(s1);
-	nfa.epsilonClosure(states);
-	auto result = nfa.step(states, Transition());
+	states = nfa.epsilonClosure(states);
+	auto result = nfa.move(states, Transition());
 	ASSERT_EQUAL(0, result.size());
-	result = nfa.step(states, 'K');
+	result = nfa.move(states, 'K');
 	ASSERT_EQUAL(1, result.size());
 	ASSERT(result.contains(s5));
 }
 
-void testMatch()
+void testSimulate()
 {
-	NFA nfa;
+	Automata nfa;
 	for (int i = 0; i != 11; ++i)
 	{
 		nfa.generateState();
 	}
 
-	// NFA for (a|b)*abb
+	// Automata for (a|b)*abb
 
 	nfa.addTransition(0, 1, Transition());
 	nfa.addTransition(0, 7, Transition());
@@ -211,23 +215,22 @@ void testMatch()
 	nfa.setStart(0);
 	nfa.setTerminate(10);
 
-	ASSERT(nfa.match("babb", 4));
-	ASSERT(nfa.match("baaaaaabb", 9));
-	ASSERT(nfa.match("aaabbbbababababb", 16));
-	ASSERT(nfa.match("abb", 3));
-	ASSERT(nfa.match("abbabb", 6));
-	ASSERT(!nfa.match("abbacbb", 7));
-	ASSERT(!nfa.match("babba", 5));
-	ASSERT(!nfa.match("abbbbb", 6));
-	ASSERT(!nfa.match("aaaaa", 5));
-	ASSERT(!nfa.match("", 0));
-	ASSERT(!nfa.match("b", 1));
+	ASSERT(nfa.simulate("babb", 4));
+	ASSERT(nfa.simulate("baaaaaabb", 9));
+	ASSERT(nfa.simulate("aaabbbbababababb", 16));
+	ASSERT(nfa.simulate("abb", 3));
+	ASSERT(nfa.simulate("abbabb", 6));
+	ASSERT(!nfa.simulate("abbacbb", 7));
+	ASSERT(!nfa.simulate("babba", 5));
+	ASSERT(!nfa.simulate("abbbbb", 6));
+	ASSERT(!nfa.simulate("aaaaa", 5));
+	ASSERT(!nfa.simulate("", 0));
+	ASSERT(!nfa.simulate("b", 1));
 }
-
 
 // Test suits
 
-void nfaSuit()
+void automataSuit()
 {
 	cute::suite s;
 	s += CUTE(testTransitionEqualAndType);
@@ -236,9 +239,9 @@ void nfaSuit()
 	s += CUTE(testAddTransition);
 	s += CUTE(testStartTerminate);
 	s += CUTE(testTerminateSet);
-	s += CUTE(testGetAllTransitions);
+	s += CUTE(testGetNoneEpsilonTransitions);
 	s += CUTE(testEpsilonClosure);
-	s += CUTE(testMatch);
-	s += CUTE(testStep);
-	cute::runner<cute::ostream_listener>()(s, "NFA Test");
+	s += CUTE(testSimulate);
+	s += CUTE(testMove);
+	cute::runner<cute::ostream_listener>()(s, "Automata Test");
 }

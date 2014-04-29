@@ -71,6 +71,18 @@ void testSetLessThan()
 	ASSERT(s1 < s2);
 }
 
+void testCoW()
+{
+	SortedVectorSet<int> s1;
+	s1.insert(3);
+	SortedVectorSet<int> s2 = s1;
+	ASSERT(s1 == s2);
+	s2.insert(4);
+	ASSERT(s1 != s2);
+	ASSERT_EQUAL(1, s1.size());
+	ASSERT_EQUAL(2, s2.size());
+}
+
 // Test suits
 
 void containersSuit()
@@ -80,5 +92,6 @@ void containersSuit()
 	s += CUTE(testSetInsertContains);
 	s += CUTE(testSetEqual);
 	s += CUTE(testSetLessThan);
+	s += CUTE(testCoW);
 	cute::runner<cute::ostream_listener>()(s, "Containers Test");
 }

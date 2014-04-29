@@ -20,9 +20,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\nfa.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="include\parser.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -32,7 +29,10 @@
     <ClInclude Include="include\containers.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="include\dfa.h">
+    <ClInclude Include="include\automata.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="include\simplifier.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

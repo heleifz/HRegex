@@ -1,13 +1,13 @@
-#include "testNFA.h"
+#include "testAutomata.h"
 #include "testParser.h"
 #include "testContainers.h"
-#include "testDFA.h"
+#include "testSimplifier.h"
 
 int main()
 {
 	containersSuit();
-	nfaSuit();
+	automataSuit();
 	parserSuit();
-	dfaSuit();
+	simplifierSuit();
 	system("pause");
 }

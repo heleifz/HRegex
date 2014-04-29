@@ -23,13 +23,13 @@
     <ClInclude Include="testContainers.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="testDFA.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="testNFA.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="testParser.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="testAutomata.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="testSimplifier.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
