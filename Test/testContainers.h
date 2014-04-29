@@ -71,6 +71,60 @@ void testSetLessThan()
 	ASSERT(s1 < s2);
 }
 
+void testIntersection()
+{
+	SortedVectorSet<int> s1;
+	SortedVectorSet<int> s2;
+	SortedVectorSet<int> s3;
+	s1.insert(1);
+	s1.insert(2);
+	s1.insert(3);
+	s2.insert(2);
+	s2.insert(3);
+	s2.insert(4);
+	auto result = s1 && s2;
+	ASSERT_EQUAL(2, result.size());
+	ASSERT(result.contains(2));
+	ASSERT(result.contains(3));
+	result = s1 && s3;
+	ASSERT_EQUAL(0, result.size());
+	s3.insert(4);
+	s3.insert(5);
+	result = s1 && s3;
+	ASSERT_EQUAL(0, result.size());
+}
+
+void testUnion()
+{
+	SortedVectorSet<int> s1;
+	SortedVectorSet<int> s2;
+	SortedVectorSet<int> s3;
+	ASSERT_EQUAL(0, (s1 || s2).size());
+	s1.insert(1);
+	s1.insert(2);
+	s1.insert(3);
+	s2.insert(2);
+	s2.insert(3);
+	s2.insert(4);
+	auto result = s1 || s2;
+	ASSERT_EQUAL(4, result.size());
+	ASSERT(result.contains(1));
+	ASSERT(result.contains(2));
+	ASSERT(result.contains(3));
+	ASSERT(result.contains(4));
+	result = s1 || s3;
+	ASSERT_EQUAL(result, s1);
+	s3.insert(4);
+	s3.insert(5);
+	result = s1 || s3;
+	ASSERT_EQUAL(5, result.size());
+	ASSERT(result.contains(1));
+	ASSERT(result.contains(2));
+	ASSERT(result.contains(3));
+	ASSERT(result.contains(4));
+	ASSERT(result.contains(5));
+}
+
 void testCoW()
 {
 	SortedVectorSet<int> s1;
@@ -92,6 +146,8 @@ void containersSuit()
 	s += CUTE(testSetInsertContains);
 	s += CUTE(testSetEqual);
 	s += CUTE(testSetLessThan);
+	s += CUTE(testIntersection);
+	s += CUTE(testUnion);
 	s += CUTE(testCoW);
 	cute::runner<cute::ostream_listener>()(s, "Containers Test");
 }

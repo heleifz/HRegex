@@ -12,6 +12,11 @@ public:
 	{
 		data = std::make_shared<std::vector<T>>();
 	}
+	SortedVectorSet(typename std::vector<T>::const_iterator b,
+					typename std::vector<T>::const_iterator e)
+	{
+		data = std::make_shared<std::vector<T>>(b, e);
+	}
 	bool insert(const T& e)
 	{
 		if (data.use_count() > 1)
@@ -44,6 +49,39 @@ public:
 	size_t size() const
 	{
 		return data->size();
+	}
+	SortedVectorSet<T> operator||(const SortedVectorSet<T>& other) const
+	{
+		SortedVectorSet<T> ret(*this);
+		for (auto i = other.begin(); i != other.end(); ++i)
+		{
+			ret.insert(*i);
+		}
+		return ret;
+	}
+	SortedVectorSet<T> operator&&(const SortedVectorSet<T>& other) const
+	{
+		SortedVectorSet<T> ret;
+		auto thisHead = begin();
+		auto thatHead = other.begin();
+		while (thisHead != end() && thatHead != other.end())
+		{
+			if (*thisHead == *thatHead)
+			{
+				ret.data->push_back(*thisHead);
+				thisHead++;
+				thatHead++;
+			}
+			else if (*thisHead > *thatHead)
+			{
+				thatHead++;
+			}
+			else
+			{
+				thisHead++;
+			}
+		}
+		return ret;
 	}
 	bool operator==(const SortedVectorSet& other) const
 	{
