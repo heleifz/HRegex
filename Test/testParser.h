@@ -73,6 +73,11 @@ void testOptional()
 	ASSERT(!nfa.simulate("a", 1));
 	ASSERT(!nfa.simulate("c", 1));
 	ASSERT(!nfa.simulate("b", 1));
+	Parser("a?b?", nfa);
+	ASSERT(nfa.simulate("", 0));
+	ASSERT(nfa.simulate("a", 1));
+	ASSERT(nfa.simulate("b", 1));
+	ASSERT(nfa.simulate("ab", 2));
 }
 
 void testOneOrMore()

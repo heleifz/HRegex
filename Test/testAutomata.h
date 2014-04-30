@@ -9,28 +9,28 @@
 
 void testTransitionEqualAndType()
 {
-	Transition t1;
+	Transition t1(Transition::EPSILON);
 	ASSERT_EQUAL(Transition::EPSILON, t1.getType());
-	Transition t2('c');
+	Transition t2(static_cast<HRegexByte>('c'));
 	ASSERT_EQUAL(Transition::NORMAL, t2.getType());
 	ASSERT(!(t1 == t2));
-	Transition t3('c');
-	Transition t4;
+	Transition t3(static_cast<HRegexByte>('c'));
+	Transition t4(Transition::EPSILON);
 	ASSERT(t3 == t2);
 	ASSERT(t1 == t4);
 }
 
 void testTransitionCheck()
 {
-	Transition t1;
-	Transition t2('c');
-	ASSERT(t1.check('a'));
-	ASSERT(t1.check('b'));
-	ASSERT(t1.check('z'));
-	ASSERT(!t2.check('z'));
-	ASSERT(!t2.check('b'));
-	ASSERT(!t2.check('z'));
-	ASSERT(t2.check('c'));
+	Transition t1(Transition::EPSILON);
+	Transition t2(static_cast<HRegexByte>('c'));
+	ASSERT(t1.check(static_cast<HRegexByte>('a')));
+	ASSERT(t1.check(static_cast<HRegexByte>('b')));
+	ASSERT(t1.check(static_cast<HRegexByte>('z')));
+	ASSERT(!t2.check(static_cast<HRegexByte>('z')));
+	ASSERT(!t2.check(static_cast<HRegexByte>('b')));
+	ASSERT(!t2.check(static_cast<HRegexByte>('z')));
+	ASSERT(t2.check(static_cast<HRegexByte>('c')));
 }
 
 void testSize()
@@ -55,12 +55,27 @@ void testAddTransition()
 	ASSERT_EQUAL(0, s1);
 	ASSERT_EQUAL(1, s2);
 	ASSERT_EQUAL(2, s3);
-	nfa.addTransition(s1, s2, 'B');
-	nfa.addTransition(s1, s3, 'C');
+	nfa.addTransition(s1, s2, static_cast<HRegexByte>('B'));
+	nfa.addTransition(s1, s3, static_cast<HRegexByte>('C'));
 	ASSERT_EQUAL(nfa.getNeighbours(s1)[0].getTo(), s2);
 	ASSERT_EQUAL(nfa.getNeighbours(s1)[1].getTo(), s3);
 	ASSERT(nfa.getNeighbours(s3).empty());
 	ASSERT(nfa.getNeighbours(s2).empty());
+}
+
+void testGetAllStates()
+{	
+	Automata nfa;
+	State s1 = nfa.generateState();
+	State s2 = nfa.generateState();
+	State s3 = nfa.generateState();
+	State s4 = nfa.generateState();
+	SortedVectorSet<State> s;
+	s.insert(0);
+	s.insert(1);
+	s.insert(2);
+	s.insert(3);
+	ASSERT_EQUAL(s, nfa.getAllStates());
 }
 
 void testStartTerminate()
@@ -116,9 +131,9 @@ void testGetNoneEpsilonTransitions()
 	State s3 = nfa.generateState();
 	State s4 = nfa.generateState();
 
-	nfa.addTransition(s1, s2, 'B');
-	nfa.addTransition(s1, s3, 'C');
-	nfa.addTransition(s1, s4, Transition());
+	nfa.addTransition(s1, s2, static_cast<HRegexByte>('B'));
+	nfa.addTransition(s1, s3, static_cast<HRegexByte>('C'));
+	nfa.addTransition(s1, s4, Transition::EPSILON);
 
 	SortedVectorSet<State> states;
 	auto result = nfa.getNoneEpsilonTransitions(states);
@@ -126,9 +141,9 @@ void testGetNoneEpsilonTransitions()
 	states.insert(s1);
 	result = nfa.getNoneEpsilonTransitions(states);
 	ASSERT_EQUAL(2, result.size());
-	ASSERT(std::find(result.begin(), result.end(), 'B') != result.end());
-	ASSERT(std::find(result.begin(), result.end(), 'C') != result.end());
-	nfa.addTransition(s1, s2, 'B');
+	ASSERT(std::find(result.begin(), result.end(), static_cast<HRegexByte>('B')) != result.end());
+	ASSERT(std::find(result.begin(), result.end(), static_cast<HRegexByte>('C')) != result.end());
+	nfa.addTransition(s1, s2, static_cast<HRegexByte>('B'));
 	result = nfa.getNoneEpsilonTransitions(states);
 	ASSERT_EQUAL(2, result.size());
 }
@@ -143,12 +158,12 @@ void testEpsilonClosure()
 	State s5 = nfa.generateState();
 	State s6 = nfa.generateState();
 
-	nfa.addTransition(s1, s2, Transition());
-	nfa.addTransition(s2, s1, Transition());
-	nfa.addTransition(s1, s3, Transition());
-	nfa.addTransition(s2, s4, Transition());
-	nfa.addTransition(s1, s5, 'K');
-	nfa.addTransition(s5, s6, Transition());
+	nfa.addTransition(s1, s2, Transition::EPSILON);
+	nfa.addTransition(s2, s1, Transition::EPSILON);
+	nfa.addTransition(s1, s3, Transition::EPSILON);
+	nfa.addTransition(s2, s4, Transition::EPSILON);
+	nfa.addTransition(s1, s5, static_cast<HRegexByte>('K'));
+	nfa.addTransition(s5, s6, Transition::EPSILON);
 
 	SortedVectorSet<State> states;
 	states.insert(s1);
@@ -171,21 +186,45 @@ void testMove()
 	State s5 = nfa.generateState();
 	State s6 = nfa.generateState();
 
-	nfa.addTransition(s1, s2, Transition());
-	nfa.addTransition(s2, s1, Transition());
-	nfa.addTransition(s1, s3, Transition());
-	nfa.addTransition(s2, s4, Transition());
-	nfa.addTransition(s1, s5, 'K');
-	nfa.addTransition(s5, s6, Transition());
+	nfa.addTransition(s1, s2, Transition::EPSILON);
+	nfa.addTransition(s2, s1, Transition::EPSILON);
+	nfa.addTransition(s1, s3, Transition::EPSILON);
+	nfa.addTransition(s2, s4, Transition::EPSILON);
+	nfa.addTransition(s1, s5, static_cast<HRegexByte>('K'));
+	nfa.addTransition(s5, s6, Transition::EPSILON);
 
 	SortedVectorSet<State> states;
 	states.insert(s1);
 	states = nfa.epsilonClosure(states);
-	auto result = nfa.move(states, Transition());
+	auto result = nfa.move(states, Transition::EPSILON);
 	ASSERT_EQUAL(0, result.size());
-	result = nfa.move(states, 'K');
+	result = nfa.move(states, static_cast<HRegexByte>('K'));
 	ASSERT_EQUAL(1, result.size());
 	ASSERT(result.contains(s5));
+}
+
+void testReverseEdges()
+{
+	Automata nfa;
+	ASSERT_EQUAL(0, nfa.reverseEdges().size());
+	State s1 = nfa.generateState();
+	State s2 = nfa.generateState();
+	State s3 = nfa.generateState();
+	State s4 = nfa.generateState();
+	nfa.addTransition(s1, s2, static_cast<HRegexByte>('B'));
+	nfa.addTransition(s1, s3, static_cast<HRegexByte>('C'));
+	nfa.addTransition(s1, s4, Transition::EPSILON);
+	Automata r = nfa.reverseEdges();
+	ASSERT_EQUAL(4, r.size());
+	ASSERT_EQUAL(r.getNeighbours(2)[0].getTo(), 0);
+	ASSERT_EQUAL(r.getNeighbours(2)[0].getTransition(), Transition(static_cast<HRegexByte>('C')));
+	ASSERT_EQUAL(r.getNeighbours(1)[0].getTo(), 0);
+	ASSERT_EQUAL(r.getNeighbours(1)[0].getTransition(), Transition(static_cast<HRegexByte>('B')));
+	ASSERT_EQUAL(r.getNeighbours(3)[0].getTo(), 0);
+	ASSERT_EQUAL(r.getNeighbours(3)[0].getTransition(), Transition(Transition::EPSILON));
+	ASSERT(r.getNeighbours(0).empty());
+	ASSERT_EQUAL(nfa.getTerminate(), r.getStart());
+	ASSERT_EQUAL(nfa.getStart(), r.getTerminate());
 }
 
 void testSimulate()
@@ -198,20 +237,20 @@ void testSimulate()
 
 	// Automata for (a|b)*abb
 
-	nfa.addTransition(0, 1, Transition());
-	nfa.addTransition(0, 7, Transition());
-	nfa.addTransition(1, 2, Transition());
-	nfa.addTransition(1, 4, Transition());
-	nfa.addTransition(2, 3, 'a');
-	nfa.addTransition(4, 5, 'b');
-	nfa.addTransition(3, 6, Transition());
-	nfa.addTransition(5, 6, Transition());
-	nfa.addTransition(6, 1, Transition());
-	nfa.addTransition(6, 7, Transition());
-	nfa.addTransition(7, 8, 'a');
-	nfa.addTransition(8, 9, 'b');
-	nfa.addTransition(6, 7, Transition());
-	nfa.addTransition(9, 10, 'b');
+	nfa.addTransition(0, 1, Transition::EPSILON);
+	nfa.addTransition(0, 7, Transition::EPSILON);
+	nfa.addTransition(1, 2, Transition::EPSILON);
+	nfa.addTransition(1, 4, Transition::EPSILON);
+	nfa.addTransition(2, 3, static_cast<HRegexByte>('a'));
+	nfa.addTransition(4, 5, static_cast<HRegexByte>('b'));
+	nfa.addTransition(3, 6, Transition::EPSILON);
+	nfa.addTransition(5, 6, Transition::EPSILON);
+	nfa.addTransition(6, 1, Transition::EPSILON);
+	nfa.addTransition(6, 7, Transition::EPSILON);
+	nfa.addTransition(7, 8, static_cast<HRegexByte>('a'));
+	nfa.addTransition(8, 9, static_cast<HRegexByte>('b'));
+	nfa.addTransition(6, 7, Transition::EPSILON);
+	nfa.addTransition(9, 10, static_cast<HRegexByte>('b'));
 	nfa.setStart(0);
 	nfa.setTerminate(10);
 
@@ -236,6 +275,7 @@ void automataSuit()
 	s += CUTE(testTransitionEqualAndType);
 	s += CUTE(testTransitionCheck);
 	s += CUTE(testSize);
+	s += CUTE(testGetAllStates);
 	s += CUTE(testAddTransition);
 	s += CUTE(testStartTerminate);
 	s += CUTE(testTerminateSet);
@@ -243,5 +283,6 @@ void automataSuit()
 	s += CUTE(testEpsilonClosure);
 	s += CUTE(testSimulate);
 	s += CUTE(testMove);
+	s += CUTE(testReverseEdges);
 	cute::runner<cute::ostream_listener>()(s, "Automata Test");
 }

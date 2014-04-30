@@ -12,14 +12,26 @@ public:
 		NORMAL,
 		EPSILON,
 		WILDCARD,
-		DIGIT
+		RANGE
 	};
 
-	Transition(char m) : type(NORMAL) { data.match = m; }
-	Transition(TransitionType tp) : type(tp) { }
-	Transition() : type(EPSILON) { }
+	Transition(HRegexByte m)
+		: type(NORMAL)
+	{ 
+		data.match = m; 
+	}
+	Transition(HRegexByte b, HRegexByte e)
+		: type(RANGE)
+	{
+		data.range.begin = b;
+		data.range.end = e;
+	}
+	Transition(TransitionType tp)
+		: type(tp)
+	{
+	}
 
-	bool check(char input) const
+	bool check(HRegexByte input) const
 	{
 		switch (type)
 		{
@@ -29,8 +41,8 @@ public:
 			return true;
 		case WILDCARD:
 			return true;
-		case DIGIT:
-			return (input >= '0' && input <= '9');
+		case RANGE:
+			return (input >= data.range.begin && input <= data.range.end);
 		}
 		return false;
 	}
@@ -50,15 +62,14 @@ public:
 		{
 		case Transition::NORMAL:
 			return data.match == other.data.match;
-			break;
+		case Transition::RANGE:
+			return data.range.begin == other.data.range.begin &&
+				   data.range.end == other.data.range.end;
 		case Transition::EPSILON:
 		case Transition::WILDCARD:
-		case Transition::DIGIT:
 			return true;
-			break;
 		default:
 			return false;
-			break;
 		}
 	}
 
@@ -67,7 +78,7 @@ public:
 		switch (type)
 		{
 		case Transition::NORMAL:
-			return std::string("Normal") + "[" + data.match + "]";
+			return std::string("Normal") + "[" + static_cast<char>(data.match) + "]";
 			break;
 		case Transition::EPSILON:
 			return std::string("Episilon");
@@ -75,8 +86,11 @@ public:
 		case Transition::WILDCARD:
 			return std::string("Wildcard");
 			break;
-		case Transition::DIGIT:
-			return std::string("Digit");
+		case Transition::RANGE:
+			return std::string("Range") + "[" +
+				static_cast<char>(data.range.begin) + "," +
+				static_cast<char>(data.range.end) + 
+				"]";
 			break;
 		default:
 			return std::string("Illegal Transition");
@@ -88,7 +102,12 @@ private:
 	TransitionType type;
 	union u
 	{
-		char match;
+		HRegexByte match;
+		struct
+		{
+			HRegexByte begin;
+			HRegexByte end;
+		} range;
 	} data;
 };
 
@@ -129,19 +148,18 @@ class Automata
 {
 public:
 
-	Automata() : hasStart(false) {}
+	Automata() {}
 
 	// NFA construction
 	void clear()
 	{
 		adj.clear();
-		hasStart = false;
-		terminateFlags.clear();
+		start.clear();
+		terminate.clear();
 	}
 
 	State generateState()
 	{
-		terminateFlags.push_back(false);
 		adj.push_back(std::vector<Edge>());
 		return adj.size() - 1;
 	}
@@ -157,8 +175,7 @@ public:
 		{
 			throw IllegalStateError();
 		}
-		hasStart = true;
-		start = s;
+		start.insert(s);
 	}
 
 	void setTerminate(State s)
@@ -167,7 +184,7 @@ public:
 		{
 			throw IllegalStateError();
 		}
-		terminateFlags[s] = true;
+		terminate.insert(s);
 	}
 
 	const std::vector<Edge>& getNeighbours(State s) const
@@ -179,13 +196,24 @@ public:
 		return adj[s];
 	}
 
-	State getStart() const
+	SortedVectorSet<State> getAllStates() const
 	{
-		if (!hasStart)
+		SortedVectorSet<State> ret;
+		for (auto i = 0; i != size(); ++i)
 		{
-			throw IllegalStateError();
+			ret.insert(i);
 		}
+		return ret;
+	}
+
+	SortedVectorSet<State> getStart() const
+	{
 		return start;
+	}
+
+	SortedVectorSet<State> getTerminate() const
+	{
+		return terminate;
 	}
 
 	size_t size() const
@@ -199,7 +227,7 @@ public:
 		{
 			throw IllegalStateError();
 		}
-		return (hasStart && s == start);
+		return start.contains(s);
 	}
 
 	bool isTerminate(State s) const
@@ -208,7 +236,7 @@ public:
 		{
 			throw IllegalStateError();
 		}
-		return terminateFlags[s];
+		return terminate.contains(s);
 	}
 
 	bool containsTerminate(const SortedVectorSet<State>& s) const
@@ -272,7 +300,9 @@ public:
 	SortedVectorSet<State> move(SortedVectorSet<State>& states, Transition t) const
 	{
 		SortedVectorSet<State> destinations;
-		// ignore epsilon transition
+
+		// !!! IGNORE EPSILON TRANSITIONS
+
 		if (t.getType() != Transition::EPSILON)
 		{
 			for(auto i = states.begin(); i != states.end(); ++i)
@@ -289,7 +319,7 @@ public:
 		return destinations;
 	}
 
-	SortedVectorSet<State> move(SortedVectorSet<State>& states, char input) const
+	SortedVectorSet<State> move(SortedVectorSet<State>& states, HRegexByte input) const
 	{
 		SortedVectorSet<State> destinations;
 		for (auto i = states.begin(); i != states.end(); ++i)
@@ -307,13 +337,31 @@ public:
 		return destinations;
 	}
 
+	Automata reverseEdges() const
+	{
+		Automata ret;
+		for (size_t i = 0; i != size(); ++i)
+		{
+			ret.generateState();
+		}
+		for (auto i = adj.begin(); i != adj.end(); ++i)
+		{
+			for (auto j = i->begin(); j != i->end(); ++j)
+			{
+				ret.addTransition(j->getTo(), j->getFrom(), j->getTransition());
+			}
+		}
+		ret.start = terminate;
+		ret.terminate = start;
+		return ret;
+	}
+
 	bool simulate(const char *str, size_t length) const
 	{
-		SortedVectorSet<State> states;
-		states.insert(getStart());
+		SortedVectorSet<State> states = getStart();
 		for (size_t i = 0; i < length; ++i)
 		{
-			states = move(epsilonClosure(states), str[i]);
+			states = move(epsilonClosure(states), static_cast<HRegexByte>(str[i]));
 		}
 		return containsTerminate(epsilonClosure(states));
 	}
@@ -330,7 +378,7 @@ public:
 			{
 				ss << "(terminate)";
 			}
-			else if (isStart(j))
+			if (isStart(j))
 			{
 				ss << "(start)";
 			}
@@ -345,9 +393,8 @@ public:
 	}
 
 private:
-	State start;
-	bool hasStart;
-	std::vector<bool> terminateFlags;
+	SortedVectorSet<State> start;
+	SortedVectorSet<State> terminate;
 	std::vector<std::vector<Edge>> adj;
 };
 

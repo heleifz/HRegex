@@ -1,9 +1,6 @@
 #ifndef _HREG_GLOBALS_
 #define _HREG_GLOBALS_
 
-#include <cstring>
-#include <cstdlib>
-
 #include <vector>
 #include <stack>
 #include <map>
@@ -13,6 +10,9 @@
 
 class IllegalStateError {};
 class ParseError {};
+class EmptyContainerError {};
+
+typedef unsigned char HRegexByte;
 
 class NotCopyable
 {

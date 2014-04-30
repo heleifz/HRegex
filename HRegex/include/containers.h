@@ -4,6 +4,7 @@
 #include "globals.h"
 
 // a copy-on-write set container
+// set of automata states are used and copied everywhere during regex compilation
 template <typename T>
 class SortedVectorSet
 {
@@ -35,6 +36,40 @@ public:
 			return false;
 		}
 	}
+	bool remove(const T& e)
+	{
+		if (data.use_count() > 1)
+		{
+			// make a copy
+			data = std::make_shared<std::vector<T>>(data->begin(), data->end());
+		}
+		auto iter = std::lower_bound(data->begin(), data->end(), e);
+		if (iter == data->end() || *iter != e)
+		{
+			return false;
+		}
+		else
+		{
+			data->erase(iter);
+			return true;
+		}
+	}
+	void popBack()
+	{
+		if (data.use_count() > 1)
+		{
+			// make a copy
+			data = std::make_shared<std::vector<T>>(data->begin(), data->end());
+		}
+		if (!data->empty())
+		{
+			data->pop_back();
+		}
+		else
+		{
+			throw EmptyContainerError();
+		}
+	}
 	void clear()
 	{
 		if (data.use_count() == 1)
@@ -46,16 +81,53 @@ public:
 			data = std::make_shared<std::vector<T>>();
 		}
 	}
+	const T& last() const
+	{
+		if (size() == 0)
+		{
+			throw EmptyContainerError();
+		}
+		return *(end() - 1);
+	}
+	bool isEmpty() const
+	{
+		return size() == 0;
+	}
 	size_t size() const
 	{
 		return data->size();
 	}
 	SortedVectorSet<T> operator||(const SortedVectorSet<T>& other) const
 	{
-		SortedVectorSet<T> ret(*this);
-		for (auto i = other.begin(); i != other.end(); ++i)
+		SortedVectorSet<T> ret;
+		auto thisHead = begin();
+		auto thatHead = other.begin();
+		while (thisHead != end() && thatHead != other.end())
 		{
-			ret.insert(*i);
+			if (*thisHead == *thatHead)
+			{
+				ret.data->push_back(*thisHead);
+				thisHead++;
+				thatHead++;
+			}
+			else if (*thisHead > *thatHead)
+			{
+				ret.data->push_back(*thatHead);
+				thatHead++;
+			}
+			else
+			{
+				ret.data->push_back(*thisHead);
+				thisHead++;
+			}
+		}
+		if (thisHead != end())
+		{
+			ret.data->insert(ret.data->end(), thisHead, end());
+		}
+		else if (thatHead != other.end())
+		{
+			ret.data->insert(ret.data->end(), thatHead, other.end());
 		}
 		return ret;
 	}
@@ -80,6 +152,34 @@ public:
 			{
 				thisHead++;
 			}
+		}
+		return ret;
+	}
+	SortedVectorSet<T> operator-(const SortedVectorSet<T>& other) const
+	{
+		SortedVectorSet<T> ret;
+		auto thisHead = begin();
+		auto thatHead = other.begin();
+		while (thisHead != end() && thatHead != other.end())
+		{
+			if (*thisHead == *thatHead)
+			{
+				thisHead++;
+				thatHead++;
+			}
+			else if (*thisHead > *thatHead)
+			{
+				thatHead++;
+			}
+			else
+			{
+				ret.data->push_back(*thisHead);
+				thisHead++;
+			}
+		}
+		if (thisHead != end())
+		{
+			ret.data->insert(ret.data->end(), thisHead, end());
 		}
 		return ret;
 	}

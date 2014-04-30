@@ -7,9 +7,8 @@
 	** Thompson Construction Algorithm **
 
 	TODO : 
-	+,?
-	charactor class
-	refactor
+	charactor class (suffix tree)
+	LALR
 
 	// regular expression syntax : 
 
@@ -58,14 +57,14 @@ private:
 		{
 			start = nfa.generateState();
 			end = nfa.generateState();
-			nfa.addTransition(start, s1, Transition());
-			nfa.addTransition(s2, end, Transition());
+			nfa.addTransition(start, s1, Transition::EPSILON);
+			nfa.addTransition(s2, end, Transition::EPSILON);
 			while (*re == '|')
 			{
 				re++;
 				parseTerm(s1, s2);
-				nfa.addTransition(start, s1, Transition());
-				nfa.addTransition(s2, end, Transition());
+				nfa.addTransition(start, s1, Transition::EPSILON);
+				nfa.addTransition(s2, end, Transition::EPSILON);
 			}
 		}
 		else
@@ -84,7 +83,7 @@ private:
 			State s1;
 			State s2;
 			parseFactor(s1, s2);
-			nfa.addTransition(current, s1, Transition());
+			nfa.addTransition(current, s1, Transition::EPSILON);
 			current = s2;
 		}
 		end = current;
@@ -97,7 +96,7 @@ private:
 		switch (*re)
 		{
 		case '?':
-			nfa.addTransition(s1, s2, Transition());
+			nfa.addTransition(s1, s2, Transition::EPSILON);
 			start = s1;
 			end = s2;
 			re++;
@@ -105,17 +104,17 @@ private:
 		case '*':
 			start = nfa.generateState();
 			end = nfa.generateState();
-			nfa.addTransition(start, s1, Transition());
-			nfa.addTransition(start, end, Transition());
-			nfa.addTransition(s2, end, Transition());
-			nfa.addTransition(s2, s1, Transition());
+			nfa.addTransition(start, s1, Transition::EPSILON);
+			nfa.addTransition(start, end, Transition::EPSILON);
+			nfa.addTransition(s2, end, Transition::EPSILON);
+			nfa.addTransition(s2, s1, Transition::EPSILON);
 			re++;
 			break;
 		case '+':
 			start = s1;
 			end = nfa.generateState();
-			nfa.addTransition(s2, end, Transition());
-			nfa.addTransition(end, s1, Transition());
+			nfa.addTransition(s2, end, Transition::EPSILON);
+			nfa.addTransition(end, s1, Transition::EPSILON);
 			re++;
 			break;
 		default:
@@ -136,13 +135,15 @@ private:
 			switch (*re)
 			{
 			case 'n':
-				nfa.addTransition(start, end, '\n');
+				nfa.addTransition(start, end, static_cast<HRegexByte>('\n'));
 				break;
 			case 't':
-				nfa.addTransition(start, end, '\t');
+				nfa.addTransition(start, end, static_cast<HRegexByte>('\t'));
 				break;
 			case 'd':
-				nfa.addTransition(start, end, Transition::DIGIT);
+				nfa.addTransition(start, end, Transition(
+					static_cast<HRegexByte>('0'),
+					static_cast<HRegexByte>('9')));
 				break;
 			case '{': case '}': case '|':
 			case '(': case ')': case '.':
