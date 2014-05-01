@@ -73,6 +73,7 @@ public:
 		groups.push_back(terminates);
 		groups.push_back(rest);
 		workList.insert(terminates);
+		workList.insert(rest);
 
 		while (!workList.isEmpty())
 		{

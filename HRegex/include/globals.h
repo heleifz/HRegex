@@ -10,6 +10,7 @@
 
 class IllegalStateError {};
 class ParseError {};
+class NullPointerError {};
 class EmptyContainerError {};
 
 typedef unsigned char HRegexByte;

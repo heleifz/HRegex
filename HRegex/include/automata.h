@@ -1,7 +1,16 @@
 #ifndef _HREG_AUTOMATA_
 #define _HREG_AUTOMATA_
 
+/*
+
+	有限自动机的抽象
+
+	字符全部以 Unicode 保存
+
+*/
+
 #include "globals.h"
+#include "encoding.h"
 #include "containers.h"
 
 class Transition
@@ -15,12 +24,12 @@ public:
 		RANGE
 	};
 
-	Transition(HRegexByte m)
+	Transition(UnicodeChar m)
 		: type(NORMAL)
 	{ 
 		data.match = m; 
 	}
-	Transition(HRegexByte b, HRegexByte e)
+	Transition(UnicodeChar b, UnicodeChar e)
 		: type(RANGE)
 	{
 		data.range.begin = b;
@@ -31,7 +40,7 @@ public:
 	{
 	}
 
-	bool check(HRegexByte input) const
+	bool check(UnicodeChar input) const
 	{
 		switch (type)
 		{
@@ -75,26 +84,22 @@ public:
 
 	std::string toString() const
 	{
+		std::stringstream ss;
 		switch (type)
 		{
 		case Transition::NORMAL:
-			return std::string("Normal") + "[" + static_cast<char>(data.match) + "]";
-			break;
+			ss << "Normal" << "[" << data.match << "]";
+			return ss.str();
 		case Transition::EPSILON:
 			return std::string("Episilon");
-			break;
 		case Transition::WILDCARD:
 			return std::string("Wildcard");
-			break;
 		case Transition::RANGE:
-			return std::string("Range") + "[" +
-				static_cast<char>(data.range.begin) + "," +
-				static_cast<char>(data.range.end) + 
-				"]";
-			break;
+			ss << "Range" << "[" << data.range.begin <<
+				"," << data.range.end << "]";
+			return ss.str();
 		default:
 			return std::string("Illegal Transition");
-			break;
 		}
 	}
 
@@ -102,11 +107,11 @@ private:
 	TransitionType type;
 	union u
 	{
-		HRegexByte match;
+		UnicodeChar match;
 		struct
 		{
-			HRegexByte begin;
-			HRegexByte end;
+			UnicodeChar begin;
+			UnicodeChar end;
 		} range;
 	} data;
 };
@@ -268,7 +273,7 @@ public:
 		return transitions;
 	}
 
-	SortedVectorSet<State> epsilonClosure(SortedVectorSet<State>& states) const
+	SortedVectorSet<State> epsilonClosure(const SortedVectorSet<State>& states) const
 	{
 		// use DFS to find eps-closure
 		std::vector<bool> mark(size(), false);
@@ -297,7 +302,7 @@ public:
 		return epsilon;
 	}
 
-	SortedVectorSet<State> move(SortedVectorSet<State>& states, Transition t) const
+	SortedVectorSet<State> move(const SortedVectorSet<State>& states, Transition t) const
 	{
 		SortedVectorSet<State> destinations;
 
@@ -319,7 +324,7 @@ public:
 		return destinations;
 	}
 
-	SortedVectorSet<State> move(SortedVectorSet<State>& states, HRegexByte input) const
+	SortedVectorSet<State> move(const SortedVectorSet<State>& states, UnicodeChar input) const
 	{
 		SortedVectorSet<State> destinations;
 		for (auto i = states.begin(); i != states.end(); ++i)
@@ -356,12 +361,14 @@ public:
 		return ret;
 	}
 
-	bool simulate(const char *str, size_t length) const
+	template <EncodeType E>
+	bool simulate(typename Encode<E>::PointerType str, size_t length) const
 	{
+		StreamReader<E> reader(str);
 		SortedVectorSet<State> states = getStart();
 		for (size_t i = 0; i < length; ++i)
 		{
-			states = move(epsilonClosure(states), static_cast<HRegexByte>(str[i]));
+			states = move(epsilonClosure(states), reader.next());
 		}
 		return containsTerminate(epsilonClosure(states));
 	}

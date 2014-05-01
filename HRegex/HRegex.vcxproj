@@ -64,9 +64,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="demo.cpp" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="include\containers.h" />
     <ClInclude Include="include\encoding.h" />
     <ClInclude Include="include\simplifier.h" />

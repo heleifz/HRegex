@@ -1,5 +1,5 @@
 /************************************************************************/
-/*  Test Regex Parser 
+/*  Test Regex Parser
 /************************************************************************/
 
 #include "parser.h"
@@ -8,168 +8,168 @@
 void testEmptyInput()
 {
 	Automata nfa;
-	Parser("", nfa);
+	Parser<ASCII>("", nfa);
 	ASSERT_EQUAL(0, nfa.size());
 }
 
 void testIllegalInput()
 {
 	Automata nfa;
-	ASSERT_THROWS(Parser("(aa", nfa), ParseError);
-	ASSERT_THROWS(Parser("aa)", nfa), ParseError);
-	ASSERT_THROWS(Parser("(aa))", nfa), ParseError);
-	ASSERT_THROWS(Parser("(((aa))", nfa), ParseError);
-	ASSERT_THROWS(Parser("ab|", nfa), ParseError);
-	ASSERT_THROWS(Parser("ab||", nfa), ParseError);
-	ASSERT_THROWS(Parser("|ab", nfa), ParseError);
-	ASSERT_THROWS(Parser("||ab", nfa), ParseError);
-	ASSERT_THROWS(Parser("*ab", nfa), ParseError);
+	ASSERT_THROWS(Parser<ASCII>("(aa", nfa), ParseError);
+	ASSERT_THROWS(Parser<ASCII>("aa)", nfa), ParseError);
+	ASSERT_THROWS(Parser<ASCII>("(aa))", nfa), ParseError);
+	ASSERT_THROWS(Parser<ASCII>("(((aa))", nfa), ParseError);
+	ASSERT_THROWS(Parser<ASCII>("ab|", nfa), ParseError);
+	ASSERT_THROWS(Parser<ASCII>("ab||", nfa), ParseError);
+	ASSERT_THROWS(Parser<ASCII>("|ab", nfa), ParseError);
+	ASSERT_THROWS(Parser<ASCII>("||ab", nfa), ParseError);
+	ASSERT_THROWS(Parser<ASCII>("*ab", nfa), ParseError);
 }
 
 void testConcatenate()
 {
 	Automata nfa;
-	Parser("abc", nfa);
-	ASSERT(nfa.simulate("abc", 3));
-	ASSERT(!nfa.simulate("babc", 4));
-	ASSERT(!nfa.simulate("cba", 3));
-	ASSERT(!nfa.simulate("ab", 2));
+	Parser<ASCII>("abc", nfa);
+	ASSERT(nfa.simulate<ASCII>("abc", 3));
+	ASSERT(!nfa.simulate<ASCII>("babc", 4));
+	ASSERT(!nfa.simulate<ASCII>("cba", 3));
+	ASSERT(!nfa.simulate<ASCII>("ab", 2));
 	//ASSERT(walker.match("abc", 4));
 }
 
 void testKleen()
 {
 	Automata nfa;
-	Parser("a*b", nfa);
-	ASSERT(nfa.simulate("ab", 2));
-	ASSERT(nfa.simulate("aaaab", 5));
-	ASSERT(nfa.simulate("aaaaaaab", 8));
-	ASSERT(nfa.simulate("b", 1));
-	ASSERT(!nfa.simulate("bb", 2));
-	ASSERT(!nfa.simulate("aaa", 3));
+	Parser<ASCII>("a*b", nfa);
+	ASSERT(nfa.simulate<ASCII>("ab", 2));
+	ASSERT(nfa.simulate<ASCII>("aaaab", 5));
+	ASSERT(nfa.simulate<ASCII>("aaaaaaab", 8));
+	ASSERT(nfa.simulate<ASCII>("b", 1));
+	ASSERT(!nfa.simulate<ASCII>("bb", 2));
+	ASSERT(!nfa.simulate<ASCII>("aaa", 3));
 }
 
 void testAlternate()
 {
 	Automata nfa;
-	Parser("a|bbc", nfa);
-	ASSERT(nfa.simulate("bbc", 3));
-	ASSERT(nfa.simulate("a", 1));
-	ASSERT(!nfa.simulate("bc", 2));
-	ASSERT(!nfa.simulate("bb", 2));
+	Parser<ASCII>("a|bbc", nfa);
+	ASSERT(nfa.simulate<ASCII>("bbc", 3));
+	ASSERT(nfa.simulate<ASCII>("a", 1));
+	ASSERT(!nfa.simulate<ASCII>("bc", 2));
+	ASSERT(!nfa.simulate<ASCII>("bb", 2));
 }
 
 void testOptional()
 {
 	Automata nfa;
-	Parser("a?bb?c", nfa);
-	ASSERT(nfa.simulate("bc", 2));
-	ASSERT(nfa.simulate("abbc", 4));
-	ASSERT(nfa.simulate("abc", 3));
-	ASSERT(nfa.simulate("bbc", 3));
-	ASSERT(!nfa.simulate("aabbb", 5));
-	ASSERT(!nfa.simulate("abcc", 4));
-	ASSERT(!nfa.simulate("ac", 2));
-	ASSERT(!nfa.simulate("a", 1));
-	ASSERT(!nfa.simulate("c", 1));
-	ASSERT(!nfa.simulate("b", 1));
-	Parser("a?b?", nfa);
-	ASSERT(nfa.simulate("", 0));
-	ASSERT(nfa.simulate("a", 1));
-	ASSERT(nfa.simulate("b", 1));
-	ASSERT(nfa.simulate("ab", 2));
+	Parser<ASCII>("a?bb?c", nfa);
+	ASSERT(nfa.simulate<ASCII>("bc", 2));
+	ASSERT(nfa.simulate<ASCII>("abbc", 4));
+	ASSERT(nfa.simulate<ASCII>("abc", 3));
+	ASSERT(nfa.simulate<ASCII>("bbc", 3));
+	ASSERT(!nfa.simulate<ASCII>("aabbb", 5));
+	ASSERT(!nfa.simulate<ASCII>("abcc", 4));
+	ASSERT(!nfa.simulate<ASCII>("ac", 2));
+	ASSERT(!nfa.simulate<ASCII>("a", 1));
+	ASSERT(!nfa.simulate<ASCII>("c", 1));
+	ASSERT(!nfa.simulate<ASCII>("b", 1));
+	Parser<ASCII>("a?b?", nfa);
+	ASSERT(nfa.simulate<ASCII>("", 0));
+	ASSERT(nfa.simulate<ASCII>("a", 1));
+	ASSERT(nfa.simulate<ASCII>("b", 1));
+	ASSERT(nfa.simulate<ASCII>("ab", 2));
 }
 
 void testOneOrMore()
 {
 	Automata nfa;
-	Parser("a+b+c+", nfa);
-	ASSERT(nfa.simulate("abc", 3));
-	ASSERT(nfa.simulate("abbc", 4));
-	ASSERT(nfa.simulate("abccc", 5));
-	ASSERT(nfa.simulate("aabbcc", 6));
-	ASSERT(nfa.simulate("aaabccc", 7));
-	ASSERT(nfa.simulate("abbbbbbbccc", 11));
-	ASSERT(!nfa.simulate("aabbb", 5));
-	ASSERT(!nfa.simulate("bbcc", 4));
-	ASSERT(!nfa.simulate("acb", 3));
-	ASSERT(!nfa.simulate("ac", 2));
-	ASSERT(!nfa.simulate("ab", 2));
-	ASSERT(!nfa.simulate("bc", 2));
-	ASSERT(!nfa.simulate("a", 1));
-	ASSERT(!nfa.simulate("c", 1));
-	ASSERT(!nfa.simulate("b", 1));
+	Parser<ASCII>("a+b+c+", nfa);
+	ASSERT(nfa.simulate<ASCII>("abc", 3));
+	ASSERT(nfa.simulate<ASCII>("abbc", 4));
+	ASSERT(nfa.simulate<ASCII>("abccc", 5));
+	ASSERT(nfa.simulate<ASCII>("aabbcc", 6));
+	ASSERT(nfa.simulate<ASCII>("aaabccc", 7));
+	ASSERT(nfa.simulate<ASCII>("abbbbbbbccc", 11));
+	ASSERT(!nfa.simulate<ASCII>("aabbb", 5));
+	ASSERT(!nfa.simulate<ASCII>("bbcc", 4));
+	ASSERT(!nfa.simulate<ASCII>("acb", 3));
+	ASSERT(!nfa.simulate<ASCII>("ac", 2));
+	ASSERT(!nfa.simulate<ASCII>("ab", 2));
+	ASSERT(!nfa.simulate<ASCII>("bc", 2));
+	ASSERT(!nfa.simulate<ASCII>("a", 1));
+	ASSERT(!nfa.simulate<ASCII>("c", 1));
+	ASSERT(!nfa.simulate<ASCII>("b", 1));
 }
 
 void testWildcard()
 {
 	Automata nfa;
-	Parser(".*abc.*", nfa);
-	ASSERT(nfa.simulate("abc", 3));
-	ASSERT(nfa.simulate("aaasdfabcadsfasdf", 17));
-	ASSERT(nfa.simulate("abcaa", 5));
-	ASSERT(nfa.simulate("bbabc", 5));
-	ASSERT(!nfa.simulate("bbc", 3));
-	ASSERT(!nfa.simulate("a", 1));
-	ASSERT(!nfa.simulate("abaac", 5));
-	ASSERT(!nfa.simulate("cba", 3));
+	Parser<ASCII>(".*abc.*", nfa);
+	ASSERT(nfa.simulate<ASCII>("abc", 3));
+	ASSERT(nfa.simulate<ASCII>("aaasdfabcadsfasdf", 17));
+	ASSERT(nfa.simulate<ASCII>("abcaa", 5));
+	ASSERT(nfa.simulate<ASCII>("bbabc", 5));
+	ASSERT(!nfa.simulate<ASCII>("bbc", 3));
+	ASSERT(!nfa.simulate<ASCII>("a", 1));
+	ASSERT(!nfa.simulate<ASCII>("abaac", 5));
+	ASSERT(!nfa.simulate<ASCII>("cba", 3));
 }
 
 void testDigit()
 {
 	Automata nfa;
-	Parser("\\d\\d\\d", nfa);
-	ASSERT(nfa.simulate("123", 3));
-	ASSERT(nfa.simulate("456", 3));
-	ASSERT(nfa.simulate("999", 3));
-	ASSERT(!nfa.simulate("9999", 4));
-	ASSERT(!nfa.simulate("12", 2));
-	ASSERT(!nfa.simulate("1", 1));
-	ASSERT(!nfa.simulate("asd", 3));
-	ASSERT(!nfa.simulate("a12", 3));
+	Parser<ASCII>("\\d\\d\\d", nfa);
+	ASSERT(nfa.simulate<ASCII>("123", 3));
+	ASSERT(nfa.simulate<ASCII>("456", 3));
+	ASSERT(nfa.simulate<ASCII>("999", 3));
+	ASSERT(!nfa.simulate<ASCII>("9999", 4));
+	ASSERT(!nfa.simulate<ASCII>("12", 2));
+	ASSERT(!nfa.simulate<ASCII>("1", 1));
+	ASSERT(!nfa.simulate<ASCII>("asd", 3));
+	ASSERT(!nfa.simulate<ASCII>("a12", 3));
 }
 
 void testEscape()
 {
 	Automata nfa;
-	Parser("\\+\\.\\)", nfa);
-	ASSERT(nfa.simulate("+.)", 3));
-	Parser("\\*\\(\\?", nfa);
-	ASSERT(nfa.simulate("*(?", 3));
-	Parser("\\\\", nfa);
-	ASSERT(nfa.simulate("\\", 1));
+	Parser<ASCII>("\\+\\.\\)", nfa);
+	ASSERT(nfa.simulate<ASCII>("+.)", 3));
+	Parser<ASCII>("\\*\\(\\?", nfa);
+	ASSERT(nfa.simulate<ASCII>("*(?", 3));
+	Parser<ASCII>("\\\\", nfa);
+	ASSERT(nfa.simulate<ASCII>("\\", 1));
 }
 
 void testRegexTogether()
 {
 	Automata nfa;
-	Parser("(a|b)*abb", nfa);
-	ASSERT(nfa.simulate("babb", 4));
-	ASSERT(nfa.simulate("baaaaaabb", 9));
-	ASSERT(nfa.simulate("aaabbbbababababb", 16));
-	ASSERT(nfa.simulate("abb", 3));
-	ASSERT(nfa.simulate("abbabb", 6));
-	ASSERT(!nfa.simulate("abbacbb", 7));
-	ASSERT(!nfa.simulate("babba", 5));
-	ASSERT(!nfa.simulate("abbbbb", 6));
-	ASSERT(!nfa.simulate("aaaaa", 5));
-	ASSERT(!nfa.simulate("", 0));
-	ASSERT(!nfa.simulate("b", 1));
-	Parser("(1|2|3333)*a*cb*", nfa);
-	ASSERT(nfa.simulate("c", 1));
-	ASSERT(nfa.simulate("1212c", 5));
-	ASSERT(nfa.simulate("aaaaaacbbbbbbb", 14));
-	ASSERT(nfa.simulate("22aaaaaacbbbbbbb", 16));
-	ASSERT(nfa.simulate("3333aaaaaacbbbbbbb", 18));
-	ASSERT(!nfa.simulate("23aaaaaacbbbbbbb", 16));
-	ASSERT(!nfa.simulate("333aaaaaacbbbbbbb", 17));
-	Parser("\\d\\d\\d\\.\\d\\d\\d\\.\\d\\d\\d", nfa);
-	ASSERT(nfa.simulate("111.111.111", 11));
-	ASSERT(!nfa.simulate("1a1.11a.111", 11));
-	Parser("\\d+", nfa);
-	ASSERT(nfa.simulate("123", 3));
-	ASSERT(nfa.simulate("122293", 6));
-	ASSERT(!nfa.simulate("1222a93", 7));
+	Parser<ASCII>("(a|b)*abb", nfa);
+	ASSERT(nfa.simulate<ASCII>("babb", 4));
+	ASSERT(nfa.simulate<ASCII>("baaaaaabb", 9));
+	ASSERT(nfa.simulate<ASCII>("aaabbbbababababb", 16));
+	ASSERT(nfa.simulate<ASCII>("abb", 3));
+	ASSERT(nfa.simulate<ASCII>("abbabb", 6));
+	ASSERT(!nfa.simulate<ASCII>("abbacbb", 7));
+	ASSERT(!nfa.simulate<ASCII>("babba", 5));
+	ASSERT(!nfa.simulate<ASCII>("abbbbb", 6));
+	ASSERT(!nfa.simulate<ASCII>("aaaaa", 5));
+	ASSERT(!nfa.simulate<ASCII>("", 0));
+	ASSERT(!nfa.simulate<ASCII>("b", 1));
+	Parser<ASCII>("(1|2|3333)*a*cb*", nfa);
+	ASSERT(nfa.simulate<ASCII>("c", 1));
+	ASSERT(nfa.simulate<ASCII>("1212c", 5));
+	ASSERT(nfa.simulate<ASCII>("aaaaaacbbbbbbb", 14));
+	ASSERT(nfa.simulate<ASCII>("22aaaaaacbbbbbbb", 16));
+	ASSERT(nfa.simulate<ASCII>("3333aaaaaacbbbbbbb", 18));
+	ASSERT(!nfa.simulate<ASCII>("23aaaaaacbbbbbbb", 16));
+	ASSERT(!nfa.simulate<ASCII>("333aaaaaacbbbbbbb", 17));
+	Parser<ASCII>("\\d\\d\\d\\.\\d\\d\\d\\.\\d\\d\\d", nfa);
+	ASSERT(nfa.simulate<ASCII>("111.111.111", 11));
+	ASSERT(!nfa.simulate<ASCII>("1a1.11a.111", 11));
+	Parser<ASCII>("\\d+", nfa);
+	ASSERT(nfa.simulate<ASCII>("123", 3));
+	ASSERT(nfa.simulate<ASCII>("122293", 6));
+	ASSERT(!nfa.simulate<ASCII>("1222a93", 7));
 }
 
 void parserSuit()

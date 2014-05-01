@@ -34,17 +34,17 @@ void testNFAToDFA()
 	Automata dfa = Simplifier::NFAToDFA(nfa);
 
 	ASSERT_EQUAL(5, dfa.size());
-	ASSERT(dfa.simulate("babb", 4));
-	ASSERT(dfa.simulate("baaaaaabb", 9));
-	ASSERT(dfa.simulate("aaabbbbababababb", 16));
-	ASSERT(dfa.simulate("abb", 3));
-	ASSERT(dfa.simulate("abbabb", 6));
-	ASSERT(!dfa.simulate("abbacbb", 7));
-	ASSERT(!dfa.simulate("babba", 5));
-	ASSERT(!dfa.simulate("abbbbb", 6));
-	ASSERT(!dfa.simulate("aaaaa", 5));
-	ASSERT(!dfa.simulate("", 0));
-	ASSERT(!dfa.simulate("b", 1));
+	ASSERT(dfa.simulate<ASCII>("babb", 4));
+	ASSERT(dfa.simulate<ASCII>("baaaaaabb", 9));
+	ASSERT(dfa.simulate<ASCII>("aaabbbbababababb", 16));
+	ASSERT(dfa.simulate<ASCII>("abb", 3));
+	ASSERT(dfa.simulate<ASCII>("abbabb", 6));
+	ASSERT(!dfa.simulate<ASCII>("abbacbb", 7));
+	ASSERT(!dfa.simulate<ASCII>("babba", 5));
+	ASSERT(!dfa.simulate<ASCII>("abbbbb", 6));
+	ASSERT(!dfa.simulate<ASCII>("aaaaa", 5));
+	ASSERT(!dfa.simulate<ASCII>("", 0));
+	ASSERT(!dfa.simulate<ASCII>("b", 1));
 
 	// TODO : more test?	
 
@@ -92,17 +92,17 @@ void testMinimizeDFA()
 	dfa.setTerminate(4);
 	dfa = Simplifier::MinimizeDFA(dfa);
 	ASSERT_EQUAL(4, dfa.size());
-	ASSERT(dfa.simulate("babb", 4));
-	ASSERT(dfa.simulate("baaaaaabb", 9));
-	ASSERT(dfa.simulate("aaabbbbababababb", 16));
-	ASSERT(dfa.simulate("abb", 3));
-	ASSERT(dfa.simulate("abbabb", 6));
-	ASSERT(!dfa.simulate("abbacbb", 7));
-	ASSERT(!dfa.simulate("babba", 5));
-	ASSERT(!dfa.simulate("abbbbb", 6));
-	ASSERT(!dfa.simulate("aaaaa", 5));
-	ASSERT(!dfa.simulate("", 0));
-	ASSERT(!dfa.simulate("b", 1));
+	ASSERT(dfa.simulate<ASCII>("babb", 4));
+	ASSERT(dfa.simulate<ASCII>("baaaaaabb", 9));
+	ASSERT(dfa.simulate<ASCII>("aaabbbbababababb", 16));
+	ASSERT(dfa.simulate<ASCII>("abb", 3));
+	ASSERT(dfa.simulate<ASCII>("abbabb", 6));
+	ASSERT(!dfa.simulate<ASCII>("abbacbb", 7));
+	ASSERT(!dfa.simulate<ASCII>("babba", 5));
+	ASSERT(!dfa.simulate<ASCII>("abbbbb", 6));
+	ASSERT(!dfa.simulate<ASCII>("aaaaa", 5));
+	ASSERT(!dfa.simulate<ASCII>("", 0));
+	ASSERT(!dfa.simulate<ASCII>("b", 1));
 	
 	// DFA for a(b|c)*
 	Automata dfa2;
@@ -123,15 +123,26 @@ void testMinimizeDFA()
 	dfa2.setTerminate(3);
 	dfa2 = Simplifier::MinimizeDFA(dfa2);
 	ASSERT_EQUAL(2, dfa2.size());
-	ASSERT(dfa2.simulate("abbcc", 5));
-	ASSERT(dfa2.simulate("abc", 3));
-	ASSERT(dfa2.simulate("a", 1));
-	ASSERT(dfa2.simulate("abbbb", 5));
-	ASSERT(dfa2.simulate("acccc", 5));
-	ASSERT(dfa2.simulate("accbc", 5));
-	ASSERT(!dfa2.simulate("", 0));
-	ASSERT(!dfa2.simulate("bc", 2));
-	ASSERT(!dfa2.simulate("bcbb", 4));
+	ASSERT(dfa2.simulate<ASCII>("abbcc", 5));
+	ASSERT(dfa2.simulate<ASCII>("abc", 3));
+	ASSERT(dfa2.simulate<ASCII>("a", 1));
+	ASSERT(dfa2.simulate<ASCII>("abbbb", 5));
+	ASSERT(dfa2.simulate<ASCII>("acccc", 5));
+	ASSERT(dfa2.simulate<ASCII>("accbc", 5));
+	ASSERT(!dfa2.simulate<ASCII>("", 0));
+	ASSERT(!dfa2.simulate<ASCII>("bc", 2));
+	ASSERT(!dfa2.simulate<ASCII>("bcbb", 4));
+
+	// DFA for a?bc
+	Automata dfa3;
+	Parser<ASCII>("a?bc", dfa3);
+	dfa3 = Simplifier::NFAToDFA(dfa3);
+	dfa3 = Simplifier::MinimizeDFA(dfa3);
+	ASSERT_EQUAL(4, dfa3.size());
+	ASSERT(dfa3.simulate<ASCII>("bc", 2));
+	ASSERT(dfa3.simulate<ASCII>("abc", 3));
+	ASSERT(!dfa3.simulate<ASCII>("b", 1));
+	ASSERT(!dfa3.simulate<ASCII>("ab", 2));
 }
 
 // Test suits

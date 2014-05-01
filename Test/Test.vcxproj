@@ -73,6 +73,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="testContainers.h" />
+    <ClInclude Include="testEncoding.h" />
     <ClInclude Include="testSimplifier.h" />
     <ClInclude Include="testAutomata.h" />
     <ClInclude Include="testParser.h" />

@@ -32,5 +32,8 @@
     <ClInclude Include="testSimplifier.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="testEncoding.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

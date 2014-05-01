@@ -253,17 +253,17 @@ void testSimulate()
 	nfa.setStart(0);
 	nfa.setTerminate(10);
 
-	ASSERT(nfa.simulate("babb", 4));
-	ASSERT(nfa.simulate("baaaaaabb", 9));
-	ASSERT(nfa.simulate("aaabbbbababababb", 16));
-	ASSERT(nfa.simulate("abb", 3));
-	ASSERT(nfa.simulate("abbabb", 6));
-	ASSERT(!nfa.simulate("abbacbb", 7));
-	ASSERT(!nfa.simulate("babba", 5));
-	ASSERT(!nfa.simulate("abbbbb", 6));
-	ASSERT(!nfa.simulate("aaaaa", 5));
-	ASSERT(!nfa.simulate("", 0));
-	ASSERT(!nfa.simulate("b", 1));
+	ASSERT(nfa.simulate<ASCII>("babb", 4));
+	ASSERT(nfa.simulate<ASCII>("baaaaaabb", 9));
+	ASSERT(nfa.simulate<ASCII>("aaabbbbababababb", 16));
+	ASSERT(nfa.simulate<ASCII>("abb", 3));
+	ASSERT(nfa.simulate<ASCII>("abbabb", 6));
+	ASSERT(!nfa.simulate<ASCII>("abbacbb", 7));
+	ASSERT(!nfa.simulate<ASCII>("babba", 5));
+	ASSERT(!nfa.simulate<ASCII>("abbbbb", 6));
+	ASSERT(!nfa.simulate<ASCII>("aaaaa", 5));
+	ASSERT(!nfa.simulate<ASCII>("", 0));
+	ASSERT(!nfa.simulate<ASCII>("b", 1));
 }
 
 // Test suits
