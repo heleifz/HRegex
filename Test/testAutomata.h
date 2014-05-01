@@ -51,7 +51,6 @@ void testAddTransition()
 	State s1 = nfa.generateState();
 	State s2 = nfa.generateState();
 	State s3 = nfa.generateState();
-
 	ASSERT_EQUAL(0, s1);
 	ASSERT_EQUAL(1, s2);
 	ASSERT_EQUAL(2, s3);

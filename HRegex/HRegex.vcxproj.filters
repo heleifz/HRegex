@@ -35,5 +35,8 @@
     <ClInclude Include="include\simplifier.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="include\encoding.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

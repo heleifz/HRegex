@@ -8,15 +8,17 @@
 
 	TODO : 
 	charactor class (suffix tree)
-	LALR
+	如何支持字符类
+	如果是查表的话，行和列要如何设计
 
 	// regular expression syntax : 
 
 	re : term { "|" term }
 	term : factor { factor }
 	factor : primitive (*|+|?)
-	primitive : "\" meta | alpha | (re)
+	primitive : "\" meta | alpha | (re) | charclass
 	meta : "n" "{" "|" "}" "(" ")" "t" "+" "?"
+	charclass "[" -- TODO -- "]"
 
 	// parse function return start and end state 
 	// of the constructed subgraph
