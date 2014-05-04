@@ -47,6 +47,12 @@ void testKleen()
 	ASSERT(nfa.simulate<ASCII>("b", 1));
 	ASSERT(!nfa.simulate<ASCII>("bb", 2));
 	ASSERT(!nfa.simulate<ASCII>("aaa", 3));
+	Parser<ASCII>("a****", nfa);
+	ASSERT(nfa.simulate<ASCII>("", 0));
+	ASSERT(nfa.simulate<ASCII>("a", 1));
+	ASSERT(nfa.simulate<ASCII>("aa", 2));
+	ASSERT(nfa.simulate<ASCII>("aaa", 3));
+	ASSERT(!nfa.simulate<ASCII>("aaab", 4));
 }
 
 void testAlternate()
@@ -78,6 +84,11 @@ void testOptional()
 	ASSERT(nfa.simulate<ASCII>("a", 1));
 	ASSERT(nfa.simulate<ASCII>("b", 1));
 	ASSERT(nfa.simulate<ASCII>("ab", 2));
+	Parser<ASCII>("ab????", nfa);
+	ASSERT(nfa.simulate<ASCII>("ab", 2));
+	ASSERT(nfa.simulate<ASCII>("a", 1));
+	ASSERT(!nfa.simulate<ASCII>("b", 1));
+	ASSERT(!nfa.simulate<ASCII>("abb", 3));
 }
 
 void testOneOrMore()
@@ -99,8 +110,15 @@ void testOneOrMore()
 	ASSERT(!nfa.simulate<ASCII>("a", 1));
 	ASSERT(!nfa.simulate<ASCII>("c", 1));
 	ASSERT(!nfa.simulate<ASCII>("b", 1));
+	Parser<ASCII>("ab+++", nfa);
+	ASSERT(nfa.simulate<ASCII>("ab", 2));
+	ASSERT(nfa.simulate<ASCII>("abb", 3));
+	ASSERT(nfa.simulate<ASCII>("abbb", 4));
+	ASSERT(!nfa.simulate<ASCII>("a", 1));
+	ASSERT(!nfa.simulate<ASCII>("b", 1));
 }
 
+#include "simplifier.h"
 void testWildcard()
 {
 	Automata nfa;
@@ -113,6 +131,7 @@ void testWildcard()
 	ASSERT(!nfa.simulate<ASCII>("a", 1));
 	ASSERT(!nfa.simulate<ASCII>("abaac", 5));
 	ASSERT(!nfa.simulate<ASCII>("cba", 3));
+
 }
 
 void testDigit()

@@ -20,7 +20,8 @@
 
 	re : term { "|" term }
 	term : factor { factor }
-	factor : primitive (*|+|?)
+	factor : primitive (repetition|"*"|"+"|"?")*
+	repetition : {digit?,digit?}
 	primitive : "\" meta | alpha | (re) | charclass
 	meta : "n" "{" "|" "}" "(" ")" "t" "+" "?"
 	charclass "[" "^"? (alpha | alpha "-" alpha)+ "]"
@@ -102,36 +103,41 @@ private:
 	{
 		State s1;
 		State s2;
+		State s3;
+		State s4;
 		parsePrimitive(s1, s2);
-		switch (reader.peek())
+		auto p = reader.peek();
+		while (p == '?' || p == '*' || p == '+')
 		{
-		case '?':
-			nfa.addTransition(s1, s2, Transition::EPSILON);
-			start = s1;
-			end = s2;
-			reader.next();
-			break;
-		case '*':
-			start = nfa.generateState();
-			end = nfa.generateState();
-			nfa.addTransition(start, s1, Transition::EPSILON);
-			nfa.addTransition(start, end, Transition::EPSILON);
-			nfa.addTransition(s2, end, Transition::EPSILON);
-			nfa.addTransition(s2, s1, Transition::EPSILON);
-			reader.next();
-			break;
-		case '+':
-			start = s1;
-			end = nfa.generateState();
-			nfa.addTransition(s2, end, Transition::EPSILON);
-			nfa.addTransition(end, s1, Transition::EPSILON);
-			reader.next();
-			break;
-		default:
-			start = s1;
-			end = s2;
-			break;
+			switch (p)
+			{
+			case '?':
+				nfa.addTransition(s1, s2, Transition::EPSILON);
+				reader.next();
+				break;
+			case '*':
+				s3 = nfa.generateState();
+				s4 = nfa.generateState();
+				nfa.addTransition(s3, s1, Transition::EPSILON);
+				nfa.addTransition(s3, s4, Transition::EPSILON);
+				nfa.addTransition(s2, s4, Transition::EPSILON);
+				nfa.addTransition(s2, s1, Transition::EPSILON);
+				s1 = s3;
+				s2 = s4;
+				reader.next();
+				break;
+			case '+':
+				s4 = nfa.generateState();
+				nfa.addTransition(s2, s4, Transition::EPSILON);
+				nfa.addTransition(s4, s1, Transition::EPSILON);
+				s2 = s4;
+				reader.next();
+				break;
+			}
+			p = reader.peek();
 		}
+		start = s1;
+		end = s2;
 	}
 	void parsePrimitive(State& start, State& end)
 	{
