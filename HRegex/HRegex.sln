@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HRegex", "HRegex.vcxproj", 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test", "..\Test\Test.vcxproj", "{F48F73DE-7BC4-4F29-82C3-24C328536E69}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Experiment", "..\Experiment\Experiment.vcxproj", "{3E76FE41-4964-47D8-B135-2E24FEBD9C20}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -21,6 +23,10 @@ Global
 		{F48F73DE-7BC4-4F29-82C3-24C328536E69}.Debug|Win32.Build.0 = Debug|Win32
 		{F48F73DE-7BC4-4F29-82C3-24C328536E69}.Release|Win32.ActiveCfg = Release|Win32
 		{F48F73DE-7BC4-4F29-82C3-24C328536E69}.Release|Win32.Build.0 = Release|Win32
+		{3E76FE41-4964-47D8-B135-2E24FEBD9C20}.Debug|Win32.ActiveCfg = Debug|Win32
+		{3E76FE41-4964-47D8-B135-2E24FEBD9C20}.Debug|Win32.Build.0 = Debug|Win32
+		{3E76FE41-4964-47D8-B135-2E24FEBD9C20}.Release|Win32.ActiveCfg = Release|Win32
+		{3E76FE41-4964-47D8-B135-2E24FEBD9C20}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
