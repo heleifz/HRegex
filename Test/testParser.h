@@ -118,7 +118,17 @@ void testOneOrMore()
 	ASSERT(!nfa.simulate<ASCII>("b", 1));
 }
 
-#include "simplifier.h"
+void testRepetition()
+{
+	Automata nfa;
+	Parser<ASCII>("a{15,226}", nfa);
+	Parser<ASCII>("a{,226}", nfa);
+	Parser<ASCII>("a{15,}", nfa);
+	Parser<ASCII>("a{15}", nfa);
+	Parser<ASCII>("a{226}", nfa);
+	Parser<ASCII>("a{,}", nfa);
+}
+
 void testWildcard()
 {
 	Automata nfa;
@@ -131,7 +141,6 @@ void testWildcard()
 	ASSERT(!nfa.simulate<ASCII>("a", 1));
 	ASSERT(!nfa.simulate<ASCII>("abaac", 5));
 	ASSERT(!nfa.simulate<ASCII>("cba", 3));
-
 }
 
 void testDigit()
@@ -201,6 +210,7 @@ void parserSuit()
 	s += CUTE(testAlternate);
 	s += CUTE(testOptional);
 	s += CUTE(testOneOrMore);
+	s += CUTE(testRepetition);
 	s += CUTE(testWildcard);
 	s += CUTE(testDigit);
 	s += CUTE(testEscape);

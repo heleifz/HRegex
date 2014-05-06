@@ -8,6 +8,10 @@
 	** Thompson Construction Algorithm **
 
 	TODO : 
+	construct AST explicity
+	then rewrite the tree
+	then convert the tree to NFA
+
 	{2, 5} = Parser<ASCII>("ss(s(ss?)?)?", a);
 	{2, } = ss+
 	{0} = empty
@@ -81,7 +85,6 @@ private:
 			start = s1;
 			end = s2;
 		}
-
 	}
 	void parseTerm(State& start, State& end)
 	{
@@ -101,14 +104,14 @@ private:
 	}
 	void parseFactor(State& start, State& end)
 	{
-		State s1;
-		State s2;
-		State s3;
-		State s4;
+		State s1; State s2;
+		State s3; State s4;
 		parsePrimitive(s1, s2);
 		auto p = reader.peek();
-		while (p == '?' || p == '*' || p == '+')
+		while (p == '?' || p == '*' || p == '+' || p == '{')
 		{
+			int minRepetition;
+			int maxRepetition;
 			switch (p)
 			{
 			case '?':
@@ -133,11 +136,92 @@ private:
 				s2 = s4;
 				reader.next();
 				break;
+			case '{':
+				parseRepetition(minRepetition, maxRepetition);
+				// construct equivalent nfa
+				// special cases : {count}
+				if (minRepetition == maxRepetition && minRepetition > 0)
+				{
+
+				}
+				// special case : {count,}
+				else if (minRepetition > 0 && maxRepetition == -1)
+				{
+
+				}
+				// special case : {,}
+				else if (minRepetition == 0 && maxRepetition == -1)
+				{
+
+				}
+				// normal case : {count1, count2}
+				else if (minRepetition < maxRepetition && minRepetition >= 0)
+				{
+
+				}
+				else
+				{
+					throw ParseError();
+				}
+				break;
 			}
 			p = reader.peek();
 		}
 		start = s1;
 		end = s2;
+	}
+	// assume that the reader is at {...}
+	//                              ^
+	void parseRepetition(int& minNum, int& maxNum)
+	{
+		if (reader.peek() != '{')
+		{
+			throw ParseError();
+		}
+		reader.next();
+		minNum = 0;
+		// parse minNum
+		while (reader.peek() != ',' && reader.peek() != '}')
+		{
+			if (reader.peek() >= '0' && reader.peek() <= '9')
+			{
+				minNum = minNum * 10 + (reader.next() - '0');
+			}
+			else
+			{
+				throw ParseError();
+			}
+		}
+		if (reader.peek() == '}')
+		{
+			reader.next();
+			maxNum = minNum;
+			return;
+		}
+		// consume the comma
+		reader.next();
+		// parse maxNum
+		if (reader.peek() == '}')
+		{
+			maxNum = -1;
+			reader.next();
+			return;
+		}
+		maxNum = 0;
+		while (reader.peek() != '}')
+		{
+			if (reader.peek() >= '0' && reader.peek() <= '9')
+			{
+				maxNum = maxNum * 10 + (reader.next() - '0');
+			}
+			else
+			{
+				throw ParseError();
+			}
+		}
+		// consome the right curly braces
+		reader.next();
+		return;
 	}
 	void parsePrimitive(State& start, State& end)
 	{
