@@ -1,16 +1,13 @@
 #include "automata.h"
 #include "encoding.h"
 
-struct Range
-{
-	UnicodeChar lower;
-	UnicodeChar upper;
-};
+// 完全消除递归！怎么整？！
 
 class ExpressionNode
 {
+public:
+	virtual void convertToNFA(Automata& nfa, State& s, State& e) const = 0;
 };
-
 typedef std::shared_ptr<ExpressionNode> NodePtr;
 
 ///////////
@@ -19,7 +16,12 @@ class CharNode : public ExpressionNode
 public:
 	CharNode(UnicodeChar c)
 		: ch(c)
+	{}
+	void convertToNFA(Automata& nfa, State& s, State& e) const
 	{
+		s = nfa.generateState();
+		e = nfa.generateState();
+		nfa.addTransition(s, e, ch);
 	}
 private:
 	UnicodeChar ch;
@@ -28,15 +30,29 @@ private:
 class CharsetNode : public ExpressionNode
 {
 public:
-	void addRange(UnicodeChar l, UnicodeChar u)
+	CharsetNode(const RangeSet& st)
+		: rangeSet(st)
 	{
 	}
+	void convertToNFA(Automata& nfa, State& s, State& e) const
+	{
+		s = nfa.generateState();
+		e = nfa.generateState();
+		nfa.addTransition(s, e, rangeSet);
+	}
 private:
-	std::vector<Range> ranges;
+	RangeSet rangeSet;
 };
 
 class WildcardNode : public ExpressionNode
 {
+public:
+	void convertToNFA(Automata& nfa, State& s, State& e) const
+	{
+		s = nfa.generateState();
+		e = nfa.generateState();
+		nfa.addTransition(s, e, Transition::WILDCARD);
+	}
 };
 //////////////
 class KleenNode : public ExpressionNode
@@ -45,6 +61,18 @@ public:
 	KleenNode(NodePtr n)
 		: child(n)
 	{
+	}
+	void convertToNFA(Automata& nfa, State& s, State& e) const
+	{
+		State childS;
+		State childE;
+		child->convertToNFA(nfa, childS, childE);
+		s = nfa.generateState();
+		e = nfa.generateState();
+		nfa.addTransition(s, childS, Transition::EPSILON);
+		nfa.addTransition(childE, e, Transition::EPSILON);
+		nfa.addTransition(s, e, Transition::EPSILON);
+		nfa.addTransition(childE, childS, Transition::EPSILON);
 	}
 private:
 	NodePtr child;
@@ -57,20 +85,12 @@ public:
 		: child(n)
 	{
 	}
-private:
-	NodePtr child;
-};
-
-class RepetitionNode : public ExpressionNode
-{
-public:
-	RepetitionNode(int minN, int maxN, NodePtr n)
-		: child(n), minNum(minN), maxNum(maxN)
+	void convertToNFA(Automata& nfa, State& s, State& e) const
 	{
+		child->convertToNFA(nfa, s, e);
+		nfa.addTransition(s, e, Transition::EPSILON);
 	}
 private:
-	int minNum;
-	int maxNum;
 	NodePtr child;
 };
 
@@ -81,9 +101,119 @@ public:
 		: child(n)
 	{
 	}
+	void convertToNFA(Automata& nfa, State& s, State& e) const
+	{
+		e = nfa.generateState();
+		State childE;
+		child->convertToNFA(nfa, s, childE);
+		nfa.addTransition(childE, e, Transition::EPSILON);
+		nfa.addTransition(e, s, Transition::EPSILON);
+	}
 private:
 	NodePtr child;
 };
+
+
+class RepetitionNode : public ExpressionNode
+{
+public:
+	RepetitionNode(NodePtr n, int minCnt, int maxCnt)
+		: child(n), minCount(minCnt), maxCount(maxCnt)
+	{
+	}
+	void convertToNFA(Automata& nfa, State& s, State& e) const
+	{
+		// special case : {count,} {,}
+		if (maxCount == -1)
+		{
+			State tmpS;
+			State tmpE;
+			bool result = chainConcatenation(nfa, minCount, false, tmpS, tmpE);
+			State kleenS;
+			State kleenE;
+			KleenNode(child).convertToNFA(nfa, kleenS, kleenE);
+			if (result)
+			{
+				s = tmpS;
+				nfa.addTransition(tmpE, kleenS, Transition::EPSILON);
+				e = kleenE;
+			}
+			else
+			{
+				s = kleenS;
+				e = kleenE;
+			}
+		}
+		// other case : {count}, {count1, count2}, {,count2}
+		else if (minCount <= maxCount && minCount >= 0)
+		{
+			State firstS; State firstE;
+			State secondS; State secondE;
+			bool resultFirst = chainConcatenation(nfa, minCount, false, firstS, firstE);
+			bool resultSecond = chainConcatenation(nfa, maxCount - minCount, true, secondS, secondE);
+			if (!resultFirst && !resultSecond)
+			{
+				s = nfa.generateState();
+				e = nfa.generateState();
+				nfa.addTransition(s, e, Transition::EPSILON);
+				return;
+			}
+			if (resultFirst)
+			{
+				s = firstS;
+			}
+			else
+			{
+				s = secondS;
+			}
+			if (resultSecond)
+			{
+				e = secondE;
+			}
+			else
+			{
+				e = firstE;
+			}
+			if (resultFirst && resultSecond)
+			{
+				nfa.addTransition(firstE, secondS, Transition::EPSILON);
+			}
+		}
+		else
+		{
+			throw ParseError();
+		}
+	}
+private:
+	bool chainConcatenation(Automata& nfa, int count, bool addEps, State& s, State& e) const
+	{
+		if (count == 0)
+		{
+			return false;
+		}
+		s = nfa.generateState();
+		e = nfa.generateState();
+		State current = s;
+		for (int i = 0; i < count; ++i)
+		{
+			State childS;
+			State childE;
+			child->convertToNFA(nfa, childS, childE);
+			nfa.addTransition(current, childS, Transition::EPSILON);
+			if (addEps)
+			{
+				nfa.addTransition(current, e, Transition::EPSILON);
+			}
+			current = childE;
+		}
+		nfa.addTransition(current, e, Transition::EPSILON);
+		return true;
+	}
+	NodePtr child;
+	int minCount;
+	int maxCount;
+};
+
 
 class AlternateNode : public ExpressionNode
 {
@@ -91,6 +221,19 @@ public:
 	AlternateNode(NodePtr l, NodePtr r)
 		: left(l), right(r)
 	{
+	}
+	void convertToNFA(Automata& nfa, State& s, State& e) const
+	{
+		State leftS; State leftE;
+		State rightS; State rightE;
+		left->convertToNFA(nfa, leftS, leftE);
+		right->convertToNFA(nfa, rightS, rightE);
+		s = nfa.generateState();
+		e = nfa.generateState();
+		nfa.addTransition(s, leftS, Transition::EPSILON);
+		nfa.addTransition(s, rightS, Transition::EPSILON);
+		nfa.addTransition(leftE, e, Transition::EPSILON);
+		nfa.addTransition(rightE, e, Transition::EPSILON);
 	}
 private:
 	NodePtr left;
@@ -100,15 +243,28 @@ private:
 class ConcatenateNode : public ExpressionNode
 {
 public:
-	ConcatenateNode(NodePtr l, NodePtr r)
-		: left(l), right(r)
+	void addSibling(NodePtr sibling)
 	{
+		siblings.push_back(sibling);
+	}
+	void convertToNFA(Automata& nfa, State& s, State& e) const
+	{
+		s = nfa.generateState();
+		e = nfa.generateState();
+		State current = s;
+		for (auto i = siblings.begin(); i != siblings.end(); ++i)
+		{
+			State siblingS;
+			State siblingE;
+			(*i)->convertToNFA(nfa, siblingS, siblingE);
+			nfa.addTransition(current, siblingS, Transition::EPSILON);
+			current = siblingE;
+		}
+		nfa.addTransition(current, e, Transition::EPSILON);
 	}
 private:
-	NodePtr left;
-	NodePtr right;
+	std::vector<NodePtr> siblings;
 };
-
 
 template <EncodeType E>
 class Parser
@@ -118,7 +274,20 @@ public:
 		: reader(input)
 	{
 		nfa.clear();
-		parseRE();
+		if (reader.peek() == 0)
+		{
+			return;
+		}
+		auto ast = parseRE();
+		if (reader.peek() != 0)
+		{
+			throw ParseError();
+		}
+		State s;
+		State e;
+		ast->convertToNFA(nfa, s, e);
+		nfa.setStart(s);
+		nfa.setTerminate(e);
 	}
 private:
 	NodePtr parseRE()
@@ -137,11 +306,12 @@ private:
 
 	NodePtr parseTerm()
 	{
-		NodePtr ret = parseFactor();
+		auto ret = std::make_shared<ConcatenateNode>();
+		ret->addSibling(parseFactor());
 		auto p = reader.peek();
 		while (p != '\0' && p != '|' && p != ')')
 		{
-			ret = std::make_shared<ConcatenateNode>(ret, parseFactor());
+			ret->addSibling(parseFactor());
 			p = reader.peek();
 		}
 		return ret;
@@ -172,54 +342,8 @@ private:
 			case '{':
 				// !NOTE : max must greater than zero, min must less or equal to max
 				parseRepetition(minRepetition, maxRepetition);
-				// construct equivalent AST
-				// special cases : {count}
-				if (minRepetition == maxRepetition)
-				{
-					ret = chainConcatenation(ret, minRepetition);
-					if (ret == nullptr)
-					{
-						throw ParseError();
-					}
-				}
-				// special case : {count,} {,}
-				else if (maxRepetition == -1)
-				{
-					NodePtr n = chainConcatenation(ret, minRepetition);
-					ret = std::make_shared<KleenNode>(ret);
-					if (n != nullptr)
-					{
-						ret = std::make_shared<ConcatenateNode>(n, ret);
-					}
-				}
-				// normal case : {count1, count2}
-				else if (minRepetition < maxRepetition && minRepetition >= 0)
-				{
-					// convert to nested optional expression
-					// s{2,5} == "ss(s(ss?)?)?
-					// concatenation part
-					NodePtr l = chainConcatenation(ret, minRepetition);
-					int optionalPart = maxRepetition - minRepetition;
-					NodePtr r = ret;
-					for (int i = 0; i < optionalPart - 1; ++i)
-					{
-						r = std::make_shared<ConcatenateNode>(ret,
-							std::make_shared<OptionalNode>(r));
-					}
-					r = std::make_shared<OptionalNode>(r);
-					if (l == nullptr)
-					{
-						ret = r;
-					}
-					else
-					{
-						ret = std::make_shared<ConcatenateNode>(l, r);
-					}
-				}
-				else
-				{
-					throw ParseError();
-				}
+				ret = std::make_shared<RepetitionNode>(ret, minRepetition, maxRepetition);
+
 				break;
 			}
 			p = reader.peek();
@@ -230,6 +354,7 @@ private:
 	NodePtr parsePrimitive()
 	{
 		NodePtr p = nullptr;
+		RangeSet st;
 		// lookahead
 		switch (reader.peek())
 		{
@@ -238,13 +363,15 @@ private:
 			switch (reader.peek())
 			{
 			case 'd':
-				return std::make_shared<CharsetNode>();
+				st.insert({ '0', '9' });
+				reader.next();
+				return std::make_shared<CharsetNode>(st);
 				break;
 			case '{': case '}': case '|':
 			case '(': case ')': case '.':
 			case '+': case '*': case '?':
 			case '\\': case 'n': case 't':
-				return std::make_shared<CharNode>(reader.peek());
+				return std::make_shared<CharNode>(reader.next());
 				break;
 			default:
 				throw ParseError();
@@ -325,26 +452,10 @@ private:
 		reader.next();
 		return;
 	}
-	
-	NodePtr chainConcatenation(NodePtr n, int count)
-	{
-		if (count == 0)
-		{
-			return nullptr;
-		}
-		else if (count < 0)
-		{
-			throw ParseError();
-		}
-		NodePtr ret = n;
-		for (int i = 0; i < count - 1; ++i)
-		{
-			ret = std::make_shared<ConcatenateNode>(ret, n);
-		}
-		return ret;
-	}
 	StreamReader<E> reader;
 };
+
+
 
 int main()
 {

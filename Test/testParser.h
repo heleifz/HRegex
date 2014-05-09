@@ -121,12 +121,22 @@ void testOneOrMore()
 void testRepetition()
 {
 	Automata nfa;
-	Parser<ASCII>("a{15,226}", nfa);
-	Parser<ASCII>("a{,226}", nfa);
-	Parser<ASCII>("a{15,}", nfa);
+	Parser<ASCII>("a{2,4}b", nfa);
+	ASSERT(!nfa.simulate<ASCII>("ab", 2));
+	ASSERT(nfa.simulate<ASCII>("aab", 3));
+	ASSERT(nfa.simulate<ASCII>("aaab", 4));
+	ASSERT(nfa.simulate<ASCII>("aaaab", 5));
+	ASSERT(!nfa.simulate<ASCII>("aaaaab", 6));
+	ASSERT(!nfa.simulate<ASCII>("aaaa", 4));
+	Parser<ASCII>("(ab){3,}", nfa);
+	ASSERT(!nfa.simulate<ASCII>("abab", 4));
+	ASSERT(nfa.simulate<ASCII>("ababab", 6));
+	ASSERT(nfa.simulate<ASCII>("abababab", 8));
+	ASSERT(!nfa.simulate<ASCII>("abaabab", 7));
+	Parser<ASCII>("a{,}", nfa);
+	Parser<ASCII>("a{,220}", nfa);
 	Parser<ASCII>("a{15}", nfa);
 	Parser<ASCII>("a{226}", nfa);
-	Parser<ASCII>("a{,}", nfa);
 }
 
 void testWildcard()

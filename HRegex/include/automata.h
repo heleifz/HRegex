@@ -13,6 +13,50 @@
 #include "encoding.h"
 #include "containers.h"
 
+struct Range
+{
+	UnicodeChar lower;
+	UnicodeChar upper;
+	bool operator==(const Range& other) const
+	{
+		return lower == lower && upper == upper;
+	}
+};
+
+class RangeSet
+{
+public:
+	void insert(const Range& r)
+	{
+		ranges.push_back(r);
+	}
+	bool contains(UnicodeChar ch) const
+	{
+		for (auto i = ranges.begin(); i != ranges.end(); ++i)
+		{
+			if (ch >= i->lower && ch <= i->upper)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+	bool operator==(const RangeSet& other) const
+	{
+		return ranges == other.ranges;
+	}
+	std::vector<Range>::const_iterator begin() const
+	{
+		return ranges.begin();
+	}
+	std::vector<Range>::const_iterator end() const
+	{
+		return ranges.end();
+	}
+private:
+	std::vector<Range> ranges;
+};
+
 class Transition
 {
 public:
@@ -29,11 +73,9 @@ public:
 	{ 
 		data.match = m; 
 	}
-	Transition(UnicodeChar b, UnicodeChar e)
-		: type(RANGE)
+	Transition(const RangeSet& st)
+		: type(RANGE), rangeSet(st)
 	{
-		data.range.begin = b;
-		data.range.end = e;
 	}
 	Transition(TransitionType tp)
 		: type(tp)
@@ -51,7 +93,7 @@ public:
 		case WILDCARD:
 			return true;
 		case RANGE:
-			return (input >= data.range.begin && input <= data.range.end);
+			return rangeSet.contains(input);
 		}
 		return false;
 	}
@@ -72,8 +114,7 @@ public:
 		case Transition::NORMAL:
 			return data.match == other.data.match;
 		case Transition::RANGE:
-			return data.range.begin == other.data.range.begin &&
-				   data.range.end == other.data.range.end;
+			return rangeSet == other.rangeSet;
 		case Transition::EPSILON:
 		case Transition::WILDCARD:
 			return true;
@@ -95,8 +136,12 @@ public:
 		case Transition::WILDCARD:
 			return std::string("Wildcard");
 		case Transition::RANGE:
-			ss << "Range" << "[" << data.range.begin <<
-				"," << data.range.end << "]";
+			ss << "Range" << "[";
+			for (auto i = rangeSet.begin(); i != rangeSet.end(); ++i)
+			{
+				ss << "(" << i->lower << "," << i->upper << ")";
+			}
+			ss << "]";
 			return ss.str();
 		default:
 			return std::string("Illegal Transition");
@@ -108,12 +153,8 @@ private:
 	union u
 	{
 		UnicodeChar match;
-		struct
-		{
-			UnicodeChar begin;
-			UnicodeChar end;
-		} range;
 	} data;
+	RangeSet rangeSet;
 };
 
 typedef size_t State;
